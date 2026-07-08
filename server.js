@@ -5,6 +5,7 @@ const multer = require('multer');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const BASE = process.env.BASE || '/qt';
 const DATA_DIR = path.join(__dirname, 'data');
 const UPLOAD_DIR = path.join(__dirname, 'uploads');
 
@@ -15,8 +16,6 @@ const UPLOAD_DIR = path.join(__dirname, 'uploads');
 
 // Middleware
 app.use(express.json({ limit: '50mb' }));
-app.use(express.static(__dirname));
-app.use('/uploads', express.static(UPLOAD_DIR));
 
 // Multer config for image uploads
 const storage = multer.diskStorage({
@@ -27,6 +26,13 @@ const storage = multer.diskStorage({
   }
 });
 const upload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 } });
+
+// ============ Router mounted at BASE path ============
+const router = express.Router();
+
+// Static files
+router.use(express.static(__dirname));
+router.use('/uploads', express.static(UPLOAD_DIR));
 
 // ============ File-based data helpers ============
 function readJSON(filename) {
@@ -45,11 +51,11 @@ function uid() {
 }
 
 // ============ API: Accounts ============
-app.get('/api/accounts', (req, res) => {
+router.get('/api/accounts', (req, res) => {
   res.json(readJSON('accounts.json'));
 });
 
-app.post('/api/accounts', (req, res) => {
+router.post('/api/accounts', (req, res) => {
   const accounts = readJSON('accounts.json');
   const account = { id: uid(), name: '', members: [], createdAt: Date.now(), ...req.body };
   accounts.push(account);
@@ -57,7 +63,7 @@ app.post('/api/accounts', (req, res) => {
   res.json(account);
 });
 
-app.put('/api/accounts/:id', (req, res) => {
+router.put('/api/accounts/:id', (req, res) => {
   const accounts = readJSON('accounts.json');
   const idx = accounts.findIndex(a => a.id === req.params.id);
   if (idx === -1) return res.status(404).json({ error: '账户不存在' });
@@ -66,13 +72,12 @@ app.put('/api/accounts/:id', (req, res) => {
   res.json(accounts[idx]);
 });
 
-app.delete('/api/accounts/:id', (req, res) => {
+router.delete('/api/accounts/:id', (req, res) => {
   let accounts = readJSON('accounts.json');
   const exists = accounts.find(a => a.id === req.params.id);
   if (!exists) return res.status(404).json({ error: '账户不存在' });
   accounts = accounts.filter(a => a.id !== req.params.id);
   writeJSON('accounts.json', accounts);
-  // Also delete related bills
   let bills = readJSON('bills.json');
   bills = bills.filter(b => b.accountId !== req.params.id);
   writeJSON('bills.json', bills);
@@ -80,7 +85,7 @@ app.delete('/api/accounts/:id', (req, res) => {
 });
 
 // ============ API: Bills ============
-app.get('/api/bills', (req, res) => {
+router.get('/api/bills', (req, res) => {
   let bills = readJSON('bills.json');
   if (req.query.accountId) {
     bills = bills.filter(b => b.accountId === req.query.accountId);
@@ -88,7 +93,7 @@ app.get('/api/bills', (req, res) => {
   res.json(bills);
 });
 
-app.post('/api/bills', (req, res) => {
+router.post('/api/bills', (req, res) => {
   const bills = readJSON('bills.json');
   const bill = { id: uid(), accountId: '', type: 'expense', amount: 0, date: '', source: '', note: '', image: null, createdAt: Date.now(), ...req.body };
   bills.push(bill);
@@ -96,7 +101,7 @@ app.post('/api/bills', (req, res) => {
   res.json(bill);
 });
 
-app.put('/api/bills/:id', (req, res) => {
+router.put('/api/bills/:id', (req, res) => {
   const bills = readJSON('bills.json');
   const idx = bills.findIndex(b => b.id === req.params.id);
   if (idx === -1) return res.status(404).json({ error: '账单不存在' });
@@ -105,7 +110,7 @@ app.put('/api/bills/:id', (req, res) => {
   res.json(bills[idx]);
 });
 
-app.delete('/api/bills/:id', (req, res) => {
+router.delete('/api/bills/:id', (req, res) => {
   let bills = readJSON('bills.json');
   bills = bills.filter(b => b.id !== req.params.id);
   writeJSON('bills.json', bills);
@@ -113,33 +118,36 @@ app.delete('/api/bills/:id', (req, res) => {
 });
 
 // ============ API: Image upload ============
-app.post('/api/upload', upload.single('image'), (req, res) => {
+router.post('/api/upload', upload.single('image'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: '未选择文件' });
-  res.json({ url: '/uploads/' + req.file.filename });
+  res.json({ url: BASE + '/uploads/' + req.file.filename });
 });
 
 // ============ API: Bulk operations ============
-app.post('/api/accounts/bulk', (req, res) => {
+router.post('/api/accounts/bulk', (req, res) => {
   const accounts = req.body.accounts || [];
   writeJSON('accounts.json', accounts);
   res.json({ success: true, count: accounts.length });
 });
 
-app.post('/api/bills/bulk', (req, res) => {
+router.post('/api/bills/bulk', (req, res) => {
   const bills = req.body.bills || [];
   writeJSON('bills.json', bills);
   res.json({ success: true, count: bills.length });
 });
 
-// ============ Serve SPA ============
-app.get('*', (req, res) => {
+// ============ SPA fallback ============
+router.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+// Mount everything under BASE path
+app.use(BASE, router);
+
 app.listen(PORT, '0.0.0.0', () => {
   console.log('🪰 蜻蜓账本服务器已启动');
-  console.log('   本地访问: http://localhost:' + PORT);
-  console.log('   局域网访问: http://' + getLocalIP() + ':' + PORT);
+  console.log('   本地访问: http://localhost:' + PORT + BASE);
+  console.log('   局域网访问: http://' + getLocalIP() + ':' + PORT + BASE);
   console.log('   数据目录: ' + DATA_DIR);
 });
 

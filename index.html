@@ -309,9 +309,10 @@
 
 	  <script>
 	    /* ========== Data Layer (Server API + Local Cache) ========== */
+	    const BASE = '/qt';
 	    const API = {
 	      async _fetch(url, options) {
-	        const res = await fetch(url, options);
+	        const res = await fetch(BASE + url, options);
 	        if (!res.ok) throw new Error('API error: ' + res.status);
 	        return res.json();
 	      },
@@ -1234,9 +1235,9 @@
 
       history.replaceState({ page: 'home' }, '', '#home');
 
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('./sw.js').catch(() => {});
-      }
+	      if ('serviceWorker' in navigator) {
+	        navigator.serviceWorker.register(BASE + '/sw.js', { scope: BASE + '/' }).catch(() => {});
+	      }
     }
 
     let programmaticNav = false;
