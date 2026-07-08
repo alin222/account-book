@@ -275,16 +275,17 @@
       </div>
     </div>
 
-    <!-- Backup Sheet -->
-    <div class="overlay" id="backupOverlay" onclick="closeBackupSheet(event)">
-      <div class="sheet" onclick="event.stopPropagation()">
-        <div class="sheet-title">数据备份</div>
-        <div class="sheet-msg">将数据导出为文件保存到手机，或从备份文件恢复数据</div>
-        <button class="sheet-btn" onclick="exportData()">📤 导出备份</button>
-        <button class="sheet-btn" onclick="triggerImport()">📥 从备份恢复</button>
-        <button class="sheet-btn cancel" onclick="closeBackupSheet()">取消</button>
-      </div>
-    </div>
+	    <!-- Backup Sheet -->
+	    <div class="overlay" id="backupOverlay" onclick="closeBackupSheet(event)">
+	      <div class="sheet" onclick="event.stopPropagation()">
+	        <div class="sheet-title">数据备份</div>
+	        <div class="sheet-msg">导出 Excel 方便查看，或导出完整备份用于恢复</div>
+	        <button class="sheet-btn" onclick="exportExcel()">📊 导出 Excel</button>
+	        <button class="sheet-btn" onclick="exportJSON()">📤 导出完整备份</button>
+	        <button class="sheet-btn" onclick="triggerImport()">📥 从备份恢复</button>
+	        <button class="sheet-btn cancel" onclick="closeBackupSheet()">取消</button>
+	      </div>
+	    </div>
 
 	    <div class="toast" id="toast"></div>
 
@@ -803,29 +804,81 @@
       document.getElementById('backupOverlay').classList.remove('show');
     }
 
-    function exportData() {
-      const data = {
-        accounts: getAccounts(),
-        bills: getBills(),
-        exportedAt: new Date().toISOString(),
-        version: 1
-      };
-      const json = JSON.stringify(data, null, 2);
-      const blob = new Blob([json], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
+	    function exportExcel() {
+	      const accounts = getAccounts();
+	      const bills = getBills();
 
-      // Create a download link and trigger it
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = '蜻蜓账本_备份_' + getToday() + '.json';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+	      // Build account lookup
+	      const accountMap = {};
+	      accounts.forEach(a => { accountMap[a.id] = a; });
 
-      closeBackupSheet();
-      showToast('备份已下载');
-    }
+	      // CSV header
+	      const headers = ['日期', '类型', '金额', '来源/去向', '备注', '账户', '成员'];
+
+	      // CSV escape helper
+	      function csvEscape(val) {
+	        if (val === null || val === undefined) return '';
+	        const s = String(val);
+	        if (s.includes(',') || s.includes('"') || s.includes('\n') || s.includes('\r')) {
+	          return '"' + s.replace(/"/g, '""') + '"';
+	        }
+	        return s;
+	      }
+
+	      // Build rows
+	      const rows = [headers];
+	      bills.forEach(b => {
+	        const account = accountMap[b.accountId];
+	        const typeLabel = b.type === 'income' ? '收入' : '支出';
+	        rows.push([
+	          b.date,
+	          typeLabel,
+	          b.amount,
+	          b.source || '',
+	          b.note || '',
+	          account ? account.name : '（已删除）',
+	          account && account.members ? account.members.join('、') : ''
+	        ]);
+	      });
+
+	      // Generate CSV with BOM for Excel Chinese support
+	      const BOM = '\uFEFF';
+	      const csv = BOM + rows.map(row => row.map(csvEscape).join(',')).join('\n');
+
+	      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+	      const url = URL.createObjectURL(blob);
+	      const a = document.createElement('a');
+	      a.href = url;
+	      a.download = '蜻蜓账本_' + getToday() + '.csv';
+	      document.body.appendChild(a);
+	      a.click();
+	      document.body.removeChild(a);
+	      URL.revokeObjectURL(url);
+
+	      closeBackupSheet();
+	      showToast('Excel 已导出');
+	    }
+
+	    function exportJSON() {
+	      const data = {
+	        accounts: getAccounts(),
+	        bills: getBills(),
+	        exportedAt: new Date().toISOString(),
+	        version: 1
+	      };
+	      const json = JSON.stringify(data, null, 2);
+	      const blob = new Blob([json], { type: 'application/json' });
+	      const url = URL.createObjectURL(blob);
+	      const a = document.createElement('a');
+	      a.href = url;
+	      a.download = '蜻蜓账本_完整备份_' + getToday() + '.json';
+	      document.body.appendChild(a);
+	      a.click();
+	      document.body.removeChild(a);
+	      URL.revokeObjectURL(url);
+	      closeBackupSheet();
+	      showToast('完整备份已导出');
+	    }
 
     function triggerImport() {
       closeBackupSheet();
