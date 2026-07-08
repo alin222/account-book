@@ -1,0 +1,6 @@
+node_modules/
+data/
+uploads/
+*.log
+index_from_git.html
+index_orig_commit.html

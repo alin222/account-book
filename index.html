@@ -311,27 +311,52 @@
 	    </div>
 	  </div>
 
-  <script>
-    /* ========== Data Layer ========== */
-    const STORAGE_ACCOUNTS = 'ab_accounts';
-    const STORAGE_BILLS = 'ab_bills';
+	  <script>
+	    /* ========== Data Layer (Server API + Local Cache) ========== */
+	    const API = {
+	      async _fetch(url, options) {
+	        const res = await fetch(url, options);
+	        if (!res.ok) throw new Error('API error: ' + res.status);
+	        return res.json();
+	      },
+	      getAccounts() { return this._fetch('/api/accounts'); },
+	      createAccount(data) { return this._fetch('/api/accounts', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) }); },
+	      updateAccount(id, data) { return this._fetch('/api/accounts/'+id, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) }); },
+	      deleteAccount(id) { return this._fetch('/api/accounts/'+id, { method:'DELETE' }); },
+	      getBills(accountId) { return this._fetch('/api/bills' + (accountId ? '?accountId='+accountId : '')); },
+	      getAllBills() { return this._fetch('/api/bills'); },
+	      createBill(data) { return this._fetch('/api/bills', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) }); },
+	      updateBill(id, data) { return this._fetch('/api/bills/'+id, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) }); },
+	      deleteBill(id) { return this._fetch('/api/bills/'+id, { method:'DELETE' }); },
+	      saveBillsBulk(arr) { return this._fetch('/api/bills/bulk', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({bills:arr}) }); },
+	      saveAccountsBulk(arr) { return this._fetch('/api/accounts/bulk', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({accounts:arr}) }); },
+	    };
 
-    function uid() {
-      return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
-    }
-    function getAccounts() {
-      try { return JSON.parse(localStorage.getItem(STORAGE_ACCOUNTS)) || []; }
-      catch(e) { return []; }
-    }
-    function saveAccounts(arr) { localStorage.setItem(STORAGE_ACCOUNTS, JSON.stringify(arr)); }
-    function getBills() {
-      try { return JSON.parse(localStorage.getItem(STORAGE_BILLS)) || []; }
-      catch(e) { return []; }
-    }
-    function saveBills(arr) { localStorage.setItem(STORAGE_BILLS, JSON.stringify(arr)); }
+	    // Local cache - refreshed on each page render
+	    let _accounts = [];
+	    let _bills = [];
 
-    function getStats(accountId) {
-      const bills = getBills().filter(b => b.accountId === accountId);
+	    async function refreshCache() {
+	      try {
+	        const [acc, bills] = await Promise.all([API.getAccounts(), API.getAllBills()]);
+	        _accounts = acc;
+	        _bills = bills;
+	      } catch(e) { console.error('刷新数据失败', e); }
+	    }
+
+	    function getAccounts() { return _accounts; }
+	    function saveAccounts(arr) { _accounts = arr; API.saveAccountsBulk(arr).catch(e=>console.error(e)); }
+	    function getBillsAll() { return _bills; }
+	    function getBillsFor(accountId) { return _bills.filter(b => b.accountId === accountId); }
+	    function getBills() { return _bills; }  // compat
+	    function saveBills(arr) { _bills = arr; API.saveBillsBulk(arr).catch(e=>console.error(e)); }
+
+	    function uid() {
+	      return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+	    }
+
+	    function getStats(accountId) {
+	      const bills = getBillsFor(accountId);
       let income = 0, expense = 0;
       bills.forEach(b => {
         const amt = Number(b.amount) || 0;
@@ -423,7 +448,8 @@
     }
 
     /* ========== Render ========== */
-    function renderPage(page, direction) {
+	    async function renderPage(page, direction) {
+	      await refreshCache();
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active', 'back-anim'));
       const pageEl = document.getElementById('page-' + page);
       if (pageEl) {
@@ -472,9 +498,9 @@
       }
     }
 
-    /* ========== Home ========== */
-    function renderHome() {
-      const accounts = getAccounts();
+	    /* ========== Home ========== */
+	    function renderHome() {
+	      const accounts = getAccounts();
       const listEl = document.getElementById('accountList');
       const emptyEl = document.getElementById('emptyHome');
       if (accounts.length === 0) { listEl.innerHTML=''; emptyEl.style.display='block'; return; }
@@ -1195,7 +1221,8 @@
 	      const dateStr = now.getFullYear() + '年' + months[now.getMonth()] + '月' + days + '日';
 	      return { text: SLOGANS[idx], date: dateStr };
 	    }
-	    function init() {
+	    async function init() {
+	      await refreshCache();
 	      document.getElementById('inputDate').value = getToday();
 	      renderMemberFields();
 	      renderHome();
