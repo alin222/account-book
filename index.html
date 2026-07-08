@@ -7,8 +7,9 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="蜻蜓账本">
   <meta name="theme-color" content="#007AFF">
-  <title>蜻蜓账本</title>
-  <link rel="manifest" href="manifest.json">
+	  <title>蜻蜓账本</title>
+	  <link rel="manifest" href="manifest.json">
+	  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 	  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'><defs><style>.w{fill:white;opacity:0.35}</style></defs><rect width='120' height='120' rx='26' fill='%23007AFF'/><ellipse class='w' cx='36' cy='50' rx='28' ry='10' transform='rotate(-25 36 50)'/><ellipse class='w' cx='84' cy='50' rx='28' ry='10' transform='rotate(25 84 50)'/><ellipse class='w' cx='38' cy='65' rx='22' ry='8' transform='rotate(-15 38 65)'/><ellipse class='w' cx='82' cy='65' rx='22' ry='8' transform='rotate(15 82 65)'/><rect x='54' y='28' width='12' height='60' rx='6' fill='white'/><circle cx='60' cy='25' r='11' fill='white'/><circle cx='55' cy='22' r='4' fill='%23007AFF'/><circle cx='65' cy='22' r='4' fill='%23007AFF'/></svg>">
   <style>
     :root {
@@ -300,7 +301,7 @@
 	    </div>
 
 	    <!-- Hidden file inputs -->
-	    <input type="file" id="importExcelFile" accept=".csv" style="display:none" onchange="importExcel(this)">
+	    <input type="file" id="importExcelFile" accept=".csv,.xlsx" style="display:none" onchange="importExcel(this)">
 
 	    <div class="toast" id="toast"></div>
 
@@ -937,44 +938,37 @@
 	    function importExcel(input) {
 	      const file = input.files[0];
 	      if (!file) return;
-	      function tryImport(text) {
-	        const rows = parseCSV(text);
-	        if (rows.length < 2) return false;
-	        const header = rows[0];
-	        const col = (name) => header.indexOf(name);
-	        const dateIdx = col('日期'), typeIdx = col('类型'), amountIdx = col('金额');
-	        const sourceIdx = col('来源/去向'), noteIdx = col('备注');
-	        const accountIdx = col('账户'), membersIdx = col('成员');
-	        // Try fuzzy match: look for headers containing key chars
+
+	      function processRows(rows) {
+	        if (!rows || rows.length < 2) return false;
+	        const header = rows[0].map(h => String(h || ''));
 	        function fuzzyCol(key) {
 	          let idx = header.indexOf(key);
 	          if (idx >= 0) return idx;
-	          // Try matching by first character
 	          const ch = key.charAt(0);
 	          for (let i = 0; i < header.length; i++) {
-	            const h = (header[i] || '').replace(/[^\u4e00-\u9fff]/g, '');
+	            const h = header[i].replace(/[^\u4e00-\u9fff]/g, '');
 	            if (h.charAt(0) === ch) return i;
 	          }
 	          return -1;
 	        }
 	        const dIdx = fuzzyCol('日期'), tIdx = fuzzyCol('类型'), aIdx = fuzzyCol('金额');
-	        const sIdx = sourceIdx >= 0 ? sourceIdx : fuzzyCol('来源');
-	        const nIdx = noteIdx >= 0 ? noteIdx : fuzzyCol('备注');
-	        const acIdx = fuzzyCol('账户'), mIdx = membersIdx >= 0 ? membersIdx : fuzzyCol('成员');
+	        const sIdx = fuzzyCol('来源'), nIdx = fuzzyCol('备注');
+	        const acIdx = fuzzyCol('账户'), mIdx = fuzzyCol('成员');
 	        if (dIdx === -1 || tIdx === -1 || aIdx === -1 || acIdx === -1) return false;
 	        const accounts = getAccounts();
 	        const bills = getBills();
 	        let imported = 0, skipped = 0, duped = 0;
 	        for (let i = 1; i < rows.length; i++) {
 	          const r = rows[i];
-	          if (r.length <= acIdx || !r[acIdx].trim()) { skipped++; continue; }
-	          const accountName = r[acIdx].trim();
-	          const date = (r[dIdx] || '').trim();
-	          const typeStr = (r[tIdx] || '').replace(/[^\u4e00-\u9fff]/g, '');
+	          if (!r || r.length <= acIdx || !String(r[acIdx] || '').trim()) { skipped++; continue; }
+	          const accountName = String(r[acIdx] || '').trim();
+	          const date = String(r[dIdx] || '').trim();
+	          const typeStr = String(r[tIdx] || '').replace(/[^\u4e00-\u9fff]/g, '');
 	          const amount = parseFloat(r[aIdx]);
-	          const source = sIdx >= 0 ? (r[sIdx] || '').trim() : '';
-	          const note = nIdx >= 0 ? (r[nIdx] || '').trim() : '';
-	          const membersStr = mIdx >= 0 ? (r[mIdx] || '').trim() : '';
+	          const source = sIdx >= 0 ? String(r[sIdx] || '').trim() : '';
+	          const note = nIdx >= 0 ? String(r[nIdx] || '').trim() : '';
+	          const membersStr = mIdx >= 0 ? String(r[mIdx] || '').trim() : '';
 	          if (!date || !typeStr || isNaN(amount) || amount <= 0) { skipped++; continue; }
 	          const type = typeStr.charAt(0) === '收' ? 'income' : 'expense';
 	          let account = accounts.find(a => a.name === accountName);
@@ -1006,20 +1000,38 @@
 	        renderHome();
 	        return true;
 	      }
-	      // Try UTF-8 first, then GBK
-	      const reader = new FileReader();
-	      reader.onload = function(e) {
-	        if (tryImport(e.target.result)) { input.value = ''; return; }
-	        // UTF-8 failed, try GBK
-	        const r2 = new FileReader();
-	        r2.onload = function(ev) {
-	          if (tryImport(ev.target.result)) { input.value = ''; return; }
-	          showToast('文件格式不匹配，请使用蜻蜓账本导出的文件');
-	          input.value = '';
+
+	      const ext = file.name.split('.').pop().toLowerCase();
+	      if (ext === 'xlsx') {
+	        const reader = new FileReader();
+	        reader.onload = function(e) {
+	          try {
+	            const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+	            const sheet = wb.Sheets[wb.SheetNames[0]];
+	            const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+	            if (processRows(rows)) { input.value = ''; return; }
+	            showToast('文件格式不匹配，请使用蜻蜓账本导出的文件');
+	            input.value = '';
+	          } catch(err) { showToast('文件读取失败'); input.value = ''; }
 	        };
-	        r2.readAsText(file, 'GBK');
-	      };
-	      reader.readAsText(file, 'UTF-8');
+	        reader.readAsArrayBuffer(file);
+	      } else {
+	        // CSV: try UTF-8 then GBK
+	        const reader = new FileReader();
+	        reader.onload = function(e) {
+	          const rows = parseCSV(e.target.result);
+	          if (processRows(rows)) { input.value = ''; return; }
+	          const r2 = new FileReader();
+	          r2.onload = function(ev) {
+	            const rows2 = parseCSV(ev.target.result);
+	            if (processRows(rows2)) { input.value = ''; return; }
+	            showToast('文件格式不匹配，请使用蜻蜓账本导出的文件');
+	            input.value = '';
+	          };
+	          r2.readAsText(file, 'GBK');
+	        };
+	        reader.readAsText(file, 'UTF-8');
+	      }
 	    }
 
     function triggerImport() {

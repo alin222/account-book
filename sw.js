@@ -1,8 +1,9 @@
 // Service Worker for offline caching
-const CACHE_NAME = 'account-book-v2';
+const CACHE_NAME = 'account-book-v3';
 const ASSETS = [
   './index.html',
-  './manifest.json'
+  './manifest.json',
+  'https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js'
 ];
 
 self.addEventListener('install', (event) => {
