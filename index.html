@@ -153,9 +153,21 @@
     .sheet-btn.danger { color:var(--red); font-weight:600; }
     .sheet-btn.cancel { background:var(--bg); color:var(--text); font-weight:600; }
     .toast { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%) scale(0.8); background:rgba(0,0,0,0.8); color:#fff; padding:12px 24px; border-radius:10px; font-size:15px; font-weight:500; z-index:300; pointer-events:none; opacity:0; transition:all 0.2s; }
-    .toast.show { opacity:1; transform:translate(-50%,-50%) scale(1); }
+	    .toast.show { opacity:1; transform:translate(-50%,-50%) scale(1); }
 
-    @media (min-width:481px) {
+	    /* Image upload */
+	    .img-upload-row { display:flex; align-items:center; padding:12px 18px; }
+	    .img-upload-btn { display:flex; align-items:center; gap:6px; padding:10px 16px; background:var(--bg); border:1.5px dashed var(--separator); border-radius:10px; font-size:14px; color:var(--text-secondary); cursor:pointer; width:100%; justify-content:center; }
+	    .img-preview-wrap { position:relative; display:inline-flex; margin:4px 18px 8px; }
+	    .img-preview { width:80px; height:80px; border-radius:10px; object-fit:cover; border:1px solid var(--separator); }
+	    .img-preview-remove { position:absolute; top:-8px; right:-8px; width:24px; height:24px; border-radius:50%; background:var(--red); color:#fff; border:none; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; line-height:1; }
+	    .bill-thumb { width:40px; height:40px; border-radius:8px; object-fit:cover; margin-left:10px; cursor:pointer; flex-shrink:0; }
+	    .img-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:300; display:none; align-items:center; justify-content:center; flex-direction:column; }
+	    .img-overlay.show { display:flex; }
+	    .img-overlay img { max-width:95%; max-height:80%; border-radius:12px; object-fit:contain; }
+	    .img-overlay-close { position:absolute; top:max(20px, var(--safe-top)); right:20px; width:36px; height:36px; border-radius:50%; background:rgba(255,255,255,0.2); color:#fff; border:none; font-size:22px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+
+	    @media (min-width:481px) {
       body { background:#E8E8ED; }
       #app { border-left:1px solid var(--separator); border-right:1px solid var(--separator); box-shadow:0 0 40px rgba(0,0,0,0.08); }
       .bottom-action, .fab { left:50%; right:auto; transform:translateX(-50%); }
@@ -214,13 +226,21 @@
           <div class="am-row"><span class="am-symbol">¥</span><input type="text" inputmode="decimal" id="inputAmount" placeholder="0.00" oninput="onAmountInput(this)"></div>
         </div>
         <div class="form-group">
-          <div class="form-row" onclick="document.getElementById('inputDate').showPicker()">
-            <span class="f-label">日期 <span class="required">*</span></span><span class="f-value" id="dateDisplay"></span><span class="f-arrow">›</span>
-          </div>
-          <input type="date" id="inputDate" style="position:absolute;opacity:0;pointer-events:none;width:0;height:0" onchange="onDateChange(this)">
+	          <div class="form-row" style="position:relative;">
+	            <span class="f-label">日期 <span class="required">*</span></span><span class="f-value" id="dateDisplay"></span><span class="f-arrow">›</span>
+	            <input type="date" id="inputDate" onchange="onDateChange(this)" style="position:absolute;inset:0;opacity:0;width:100%;height:100%;">
+	          </div>
           <div class="form-row"><span class="f-label" id="sourceLabel">资金来源 <span class="required">*</span></span><input type="text" id="inputSource" placeholder="例如：工资、奖金" maxlength="50"></div>
-          <div class="form-row"><span class="f-label">备注</span><input type="text" id="inputNote" placeholder="添加备注（选填）" maxlength="100"></div>
-        </div>
+	          <div class="form-row"><span class="f-label">备注</span><input type="text" id="inputNote" placeholder="添加备注（选填）" maxlength="100"></div>
+	        </div>
+	        <div class="img-upload-row" id="imgUploadRow">
+	          <label class="img-upload-btn" for="inputImage">📷 添加图片（选填）</label>
+	          <input type="file" id="inputImage" accept="image/*" capture="environment" style="display:none" onchange="onImageSelected(event)">
+	        </div>
+	        <div class="img-preview-wrap" id="imgPreviewWrap" style="display:none">
+	          <img class="img-preview" id="imgPreview" src="" alt="预览" onclick="previewFullImage()">
+	          <button class="img-preview-remove" onclick="removeImage()">✕</button>
+	        </div>
         <div class="save-btn-wrap">
           <button class="btn-save income" id="btnSaveBill" onclick="saveBill()">保存账单</button>
         </div>
@@ -266,8 +286,13 @@
       </div>
     </div>
 
-    <div class="toast" id="toast"></div>
-  </div>
+	    <div class="toast" id="toast"></div>
+
+	    <div class="img-overlay" id="imgOverlay" onclick="closeImgPreview()">
+	      <img id="imgOverlayImg" src="" alt="" onclick="event.stopPropagation()">
+	      <button class="img-overlay-close" onclick="closeImgPreview()">✕</button>
+	    </div>
+	  </div>
 
   <script>
     /* ========== Data Layer ========== */
@@ -325,8 +350,9 @@
     let pendingImport = null;
     let editingBillId = null;      // bill being edited (null = new)
     let editingAccountId = null;   // account being edited (null = new)
-    let billSubmitting = false;    // prevent double-save
-    let accountSubmitting = false;
+	    let billSubmitting = false;    // prevent double-save
+	    let accountSubmitting = false;
+	    let currentImageData = null;   // base64 image for current bill
 
     function navigateTo(page, params) {
       navStack.push(page);
@@ -461,10 +487,11 @@
       bills.forEach(b=>{ if(!groups[b.date]) groups[b.date]={date:b.date,bills:[],dayIncome:0,dayExpense:0}; groups[b.date].bills.push(b); if(b.type==='income') groups[b.date].dayIncome+=Number(b.amount); else groups[b.date].dayExpense+=Number(b.amount); });
       listEl.innerHTML = Object.values(groups).map(g=>`<div class="date-group">
         <div class="date-header"><span class="day">${g.date}</span><span class="day-summary">${g.dayIncome>0?`<span class="in">收 ¥${fmt(g.dayIncome)}</span>`:''}${g.dayExpense>0?`<span class="out">支 ¥${fmt(g.dayExpense)}</span>`:''}</span></div>
-        ${g.bills.map(b=>`<div class="bill-item" onclick="goEditBill('${b.id}')" oncontextmenu="event.preventDefault();showDeleteBillSheet('${b.id}')">
-          <div class="bill-left"><div class="bill-icon ${b.type==='income'?'inc':'exp'}">${b.type==='income'?'收':'支'}</div><div class="bill-info"><div class="bill-src">${escapeHtml(b.source||'未备注')}</div>${b.note?`<div class="bill-note">${escapeHtml(b.note)}</div>`:''}</div></div>
-          <div class="bill-amount ${b.type==='income'?'inc':'exp'}">${b.type==='income'?'+':'-'}¥${fmt(b.amount)}</div>
-        </div>`).join('')}</div>`).join('');
+	        ${g.bills.map(b=>`<div class="bill-item" onclick="goEditBill('${b.id}')" oncontextmenu="event.preventDefault();showDeleteBillSheet('${b.id}')">
+	          <div class="bill-left"><div class="bill-icon ${b.type==='income'?'inc':'exp'}">${b.type==='income'?'收':'支'}</div><div class="bill-info"><div class="bill-src">${escapeHtml(b.source||'未备注')}</div>${b.note?`<div class="bill-note">${escapeHtml(b.note)}</div>`:''}</div></div>
+	          ${b.image?`<img class="bill-thumb" src="${b.image}" onclick="event.stopPropagation();previewFullImage('${b.image.replace(/'/g,"\\'")}')" alt="">`:''}
+	          <div class="bill-amount ${b.type==='income'?'inc':'exp'}">${b.type==='income'?'+':'-'}¥${fmt(b.amount)}</div>
+	        </div>`).join('')}</div>`).join('');
     }
     function showDeleteBillSheet(billId) {
       pendingDelete = { type:'bill', id:billId };
@@ -487,9 +514,14 @@
       if (!editingBillId) document.getElementById('btnSaveBill').className = 'btn-save '+type;
     }
 
-    function resetAddBillForm() {
-      billSubmitting = false;
-      const btn = document.getElementById('btnSaveBill');
+	    function resetAddBillForm() {
+	      billSubmitting = false;
+	      currentImageData = null;
+	      document.getElementById('imgPreview').src = '';
+	      document.getElementById('imgUploadRow').style.display = 'flex';
+	      document.getElementById('imgPreviewWrap').style.display = 'none';
+	      document.getElementById('inputImage').value = '';
+	      const btn = document.getElementById('btnSaveBill');
       btn.disabled = false;
 
       if (editingBillId) {
@@ -508,8 +540,15 @@
           document.getElementById('inputNote').value = bill.note || '';
           document.getElementById('dateDisplay').textContent = bill.date;
           document.getElementById('inputDate').value = bill.date;
-          document.getElementById('btnSaveBill').textContent = '更新账单';
-          document.getElementById('btnSaveBill').className = 'btn-save ' + billType;
+	          document.getElementById('btnSaveBill').textContent = '更新账单';
+	          document.getElementById('btnSaveBill').className = 'btn-save ' + billType;
+	          // Restore image if exists
+	          if (bill.image) {
+	            currentImageData = bill.image;
+	            document.getElementById('imgPreview').src = bill.image;
+	            document.getElementById('imgUploadRow').style.display = 'none';
+	            document.getElementById('imgPreviewWrap').style.display = 'inline-flex';
+	          }
         } else {
           // Bill not found, fall back to new
           editingBillId = null;
@@ -542,9 +581,68 @@
       if (v !== el.value) el.value = v;
     }
 
-    function onDateChange(el) {
-      document.getElementById('dateDisplay').textContent = el.value;
-    }
+	    function onDateChange(el) {
+	      document.getElementById('dateDisplay').textContent = el.value;
+	    }
+
+	    /* ========== Image Handling ========== */
+	    function compressImage(file, maxW, quality) {
+	      return new Promise((resolve, reject) => {
+	        const reader = new FileReader();
+	        reader.onload = function(e) {
+	          const img = new Image();
+	          img.onload = function() {
+	            let w = img.width, h = img.height;
+	            if (w > maxW) { h = (h * maxW) / w; w = maxW; }
+	            const canvas = document.createElement('canvas');
+	            canvas.width = w; canvas.height = h;
+	            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+	            resolve(canvas.toDataURL('image/jpeg', quality));
+	          };
+	          img.onerror = reject;
+	          img.src = e.target.result;
+	        };
+	        reader.onerror = reject;
+	        reader.readAsDataURL(file);
+	      });
+	    }
+
+	    async function onImageSelected(event) {
+	      const file = event.target.files[0];
+	      if (!file) return;
+	      if (!file.type.startsWith('image/')) { showToast('请选择图片文件'); return; }
+	      try {
+	        showToast('处理中...');
+	        currentImageData = await compressImage(file, 800, 0.7);
+	        document.getElementById('imgPreview').src = currentImageData;
+	        document.getElementById('imgUploadRow').style.display = 'none';
+	        document.getElementById('imgPreviewWrap').style.display = 'inline-flex';
+	        document.getElementById('toast').classList.remove('show');
+	      } catch(e) {
+	        showToast('图片处理失败');
+	        console.error(e);
+	      }
+	      event.target.value = '';
+	    }
+
+	    function removeImage() {
+	      currentImageData = null;
+	      document.getElementById('imgPreview').src = '';
+	      document.getElementById('imgUploadRow').style.display = 'flex';
+	      document.getElementById('imgPreviewWrap').style.display = 'none';
+	      document.getElementById('inputImage').value = '';
+	    }
+
+	    function previewFullImage(src) {
+	      const url = src || currentImageData;
+	      if (!url) return;
+	      document.getElementById('imgOverlayImg').src = url;
+	      document.getElementById('imgOverlay').classList.add('show');
+	    }
+
+	    function closeImgPreview() {
+	      document.getElementById('imgOverlay').classList.remove('show');
+	    }
 
     function saveBill() {
       // Guard against double submission (fixes iOS double-tap bug)
@@ -569,16 +667,17 @@
       btn.disabled = true;
 
       const bills = getBills();
-      const billData = {
-        id: editingBillId || uid(),
-        accountId: currentAccountId,
-        type: billType,
-        amount: Math.round(amount * 100) / 100,
-        date: date,
-        source: source,
-        note: note,
-        createdAt: editingBillId ? (bills.find(b=>b.id===editingBillId)?.createdAt || Date.now()) : Date.now()
-      };
+	      const billData = {
+	        id: editingBillId || uid(),
+	        accountId: currentAccountId,
+	        type: billType,
+	        amount: Math.round(amount * 100) / 100,
+	        date: date,
+	        source: source,
+	        note: note,
+	        image: currentImageData || null,
+	        createdAt: editingBillId ? (bills.find(b=>b.id===editingBillId)?.createdAt || Date.now()) : Date.now()
+	      };
 
       if (editingBillId) {
         // Update existing
