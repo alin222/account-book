@@ -351,10 +351,13 @@
 
 	    async function refreshCache() {
 	      try {
-	        const [acc, bills] = await Promise.all([API.getAccounts(), API.getAllBills()]);
-	        _accounts = acc;
-	        _bills = bills;
-	      } catch(e) { console.error('刷新数据失败', e); }
+	        const acc = await API.getAccounts();
+	        if (acc && acc.length !== undefined) _accounts = acc;
+	      } catch(e) { console.error('加载账户失败', e); }
+	      try {
+	        const bills = await API.getAllBills();
+	        if (bills && bills.length !== undefined) _bills = bills;
+	      } catch(e) { console.error('加载账单失败', e); }
 	    }
 
 	    function getAccounts() { return _accounts; }
