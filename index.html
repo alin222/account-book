@@ -261,7 +261,7 @@
 	            <div class="form-row"><span class="f-label">名称 <span class="required">*</span></span><input type="text" id="inputAccountName" placeholder="例如：家庭账本" maxlength="20"></div>
 	          </div>
 	          <div class="form-group">
-	            <div class="form-row"><span class="f-label">密码</span><input type="password" id="inputAccountPwd" placeholder="留空则无密码" maxlength="20"></div>
+	            <div class="form-row"><span class="f-label">密码</span><input type="password" id="inputAccountPwd" inputmode="numeric" pattern="[0-9]*" maxlength="8" placeholder="8位以内数字，留空则无密码"></div>
 	          </div>
 	          <div class="form-group">
 	            <div id="memberList"></div>
@@ -291,7 +291,7 @@
 	      <div class="sheet" onclick="event.stopPropagation()">
 	        <div class="sheet-title">需要密码</div>
 	        <div class="sheet-msg" id="pwdMsg"></div>
-	        <input type="password" id="pwdInput" placeholder="请输入账本密码" style="width:100%;padding:12px;font-size:16px;border:1px solid var(--separator);border-radius:10px;margin-bottom:12px;text-align:center;" maxlength="20" onkeydown="if(event.key==='Enter')verifyPwd()">
+	        <input type="password" id="pwdInput" inputmode="numeric" pattern="[0-9]*" maxlength="8" placeholder="请输入8位以内数字密码" style="width:100%;padding:12px;font-size:16px;border:1px solid var(--separator);border-radius:10px;margin-bottom:12px;text-align:center;" onkeydown="if(event.key==='Enter')verifyPwd()">
 	        <button class="sheet-btn" onclick="verifyPwd()">确认</button>
 	        <button class="sheet-btn cancel" onclick="closePwdPrompt()">取消</button>
 	      </div>
@@ -445,6 +445,10 @@
 
 	    function goBack() {
 	      if (navStack.length <= 1) return;
+	      // Clear password when leaving account page
+	      if (navStack[navStack.length - 1] === 'account' && currentAccountId) {
+	        delete accountPasswords[currentAccountId];
+	      }
 	      navStack.pop();
 	      const prev = navStack[navStack.length - 1];
 	      if (prev === 'home') currentAccountId = null;
@@ -885,6 +889,7 @@
 	      const name = document.getElementById('inputAccountName').value.trim();
 	      const pwd = document.getElementById('inputAccountPwd').value.trim();
 	      if (!name) { showToast('请输入账户名称'); accountSubmitting = false; return; }
+	      if (pwd && !/^\d{1,8}$/.test(pwd)) { showToast('密码需为1-8位数字'); accountSubmitting = false; return; }
 
       const members = [];
       for (let i = 0; i < memberCount; i++) {
