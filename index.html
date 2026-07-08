@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="铚昏湏璐︽湰">
+  <meta name="apple-mobile-web-app-title" content="蜻蜓账本">
   <meta name="theme-color" content="#007AFF">
-  <title>铚昏湏璐︽湰</title>
+  <title>蜻蜓账本</title>
   <link rel="manifest" href="manifest.json">
-  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23007AFF'/><text x='50' y='68' font-size='60' text-anchor='middle' fill='white'>馃搾</text></svg>">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23007AFF'/><text x='50' y='68' font-size='60' text-anchor='middle' fill='white'>📒</text></svg>">
   <style>
     :root {
       --blue: #007AFF;
@@ -170,18 +170,18 @@
         <button class="nav-back" id="btnBack" style="display:none" onclick="goBack()">
           <svg viewBox="0 0 12 20"><path d="M10 2L2 10l8 8" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
-        <span class="nav-title" id="navTitle">铚昏湏璐︽湰</span>
-        <button class="nav-action" id="btnEdit" style="display:none" onclick="editAccount()">缂栬緫</button>
+        <span class="nav-title" id="navTitle">蜻蜓账本</span>
+        <button class="nav-action" id="btnEdit" style="display:none" onclick="editAccount()">编辑</button>
       </div>
     </div>
 
     <div class="main-content" id="mainContent">
       <!-- Home -->
       <div class="page active" id="page-home">
-        <div class="home-header"><h1>铚昏湏璐︽湰</h1><p class="subtitle">杞绘澗绠＄悊澶氫汉鏀舵敮 路 <span class="backup-link" onclick="showBackupSheet()">澶囦唤</span></p></div>
+        <div class="home-header"><h1>蜻蜓账本</h1><p class="subtitle">轻松管理多人收支 · <span class="backup-link" onclick="showBackupSheet()">备份</span></p></div>
         <div class="account-list" id="accountList"></div>
         <div class="empty-state" id="emptyHome" style="display:none">
-          <div class="icon">馃搾</div><div class="text">杩樻病鏈夎处鎴?/div><div class="sub">鐐瑰嚮涓嬫柟鎸夐挳鍒涘缓绗竴涓处鏈惂</div>
+          <div class="icon">📒</div><div class="text">还没有账户</div><div class="sub">点击下方按钮创建第一个账本吧</div>
         </div>
         <!-- Hidden file input for import -->
         <input type="file" id="importFile" accept=".json" style="display:none" onchange="handleImport(event)">
@@ -192,37 +192,37 @@
         <div class="account-info" id="accountInfo"></div>
         <div class="stats-row" id="statsRow"></div>
         <div class="filter-tabs" id="filterTabs">
-          <button class="filter-tab active" data-filter="all" onclick="setFilter('all')">鍏ㄩ儴</button>
-          <button class="filter-tab" data-filter="income" onclick="setFilter('income')">鏀跺叆</button>
-          <button class="filter-tab" data-filter="expense" onclick="setFilter('expense')">鏀嚭</button>
+          <button class="filter-tab active" data-filter="all" onclick="setFilter('all')">全部</button>
+          <button class="filter-tab" data-filter="income" onclick="setFilter('income')">收入</button>
+          <button class="filter-tab" data-filter="expense" onclick="setFilter('expense')">支出</button>
         </div>
         <div class="bill-list" id="billList"></div>
         <div class="empty-state" id="emptyBills" style="display:none">
-          <div class="icon">馃摑</div><div class="text">鏆傛棤璐﹀崟璁板綍</div><div class="sub">鐐瑰嚮鍙充笅瑙掓寜閽坊鍔犺处鍗?/div>
+          <div class="icon">📝</div><div class="text">暂无账单记录</div><div class="sub">点击右下角按钮添加账单</div>
         </div>
-        <button class="fab" id="fabAdd" onclick="goAddBill()">锛?/button>
+        <button class="fab" id="fabAdd" onclick="goAddBill()">＋</button>
       </div>
 
       <!-- Add Bill -->
       <div class="page" id="page-add-bill">
         <div class="type-tabs">
-          <button class="type-tab expense" id="tabExpense" onclick="switchBillType('expense')">鏀嚭</button>
-          <button class="type-tab income active" id="tabIncome" onclick="switchBillType('income')">鏀跺叆</button>
+          <button class="type-tab expense" id="tabExpense" onclick="switchBillType('expense')">支出</button>
+          <button class="type-tab income active" id="tabIncome" onclick="switchBillType('income')">收入</button>
         </div>
         <div class="amount-box">
-          <div class="am-label" id="amountLabel">鏀跺叆閲戦 <span class="required">*</span></div>
-          <div class="am-row"><span class="am-symbol">楼</span><input type="text" inputmode="decimal" id="inputAmount" placeholder="0.00" oninput="onAmountInput(this)"></div>
+          <div class="am-label" id="amountLabel">收入金额 <span class="required">*</span></div>
+          <div class="am-row"><span class="am-symbol">¥</span><input type="text" inputmode="decimal" id="inputAmount" placeholder="0.00" oninput="onAmountInput(this)"></div>
         </div>
         <div class="form-group">
           <div class="form-row" onclick="document.getElementById('inputDate').showPicker()">
-            <span class="f-label">鏃ユ湡 <span class="required">*</span></span><span class="f-value" id="dateDisplay"></span><span class="f-arrow">鈥?/span>
+            <span class="f-label">日期 <span class="required">*</span></span><span class="f-value" id="dateDisplay"></span><span class="f-arrow">›</span>
           </div>
           <input type="date" id="inputDate" style="position:absolute;opacity:0;pointer-events:none;width:0;height:0" onchange="onDateChange(this)">
-          <div class="form-row"><span class="f-label" id="sourceLabel">璧勯噾鏉ユ簮 <span class="required">*</span></span><input type="text" id="inputSource" placeholder="渚嬪锛氬伐璧勩€佸閲? maxlength="50"></div>
-          <div class="form-row"><span class="f-label">澶囨敞</span><input type="text" id="inputNote" placeholder="娣诲姞澶囨敞锛堥€夊～锛? maxlength="100"></div>
+          <div class="form-row"><span class="f-label" id="sourceLabel">资金来源 <span class="required">*</span></span><input type="text" id="inputSource" placeholder="例如：工资、奖金" maxlength="50"></div>
+          <div class="form-row"><span class="f-label">备注</span><input type="text" id="inputNote" placeholder="添加备注（选填）" maxlength="100"></div>
         </div>
         <div class="save-btn-wrap">
-          <button class="btn-save income" id="btnSaveBill" onclick="saveBill()">淇濆瓨璐﹀崟</button>
+          <button class="btn-save income" id="btnSaveBill" onclick="saveBill()">保存账单</button>
         </div>
       </div>
 
@@ -230,39 +230,39 @@
       <div class="page" id="page-create-account">
         <div class="create-form">
           <div class="form-group">
-            <div class="form-row"><span class="f-label">鍚嶇О <span class="required">*</span></span><input type="text" id="inputAccountName" placeholder="渚嬪锛氬搴处鏈? maxlength="20"></div>
+            <div class="form-row"><span class="f-label">名称 <span class="required">*</span></span><input type="text" id="inputAccountName" placeholder="例如：家庭账本" maxlength="20"></div>
           </div>
           <div class="form-group">
             <div id="memberList"></div>
-            <div class="btn-add-member" onclick="addMemberField()"><span>锛?/span> 娣诲姞鎴愬憳锛堥€夊～锛?/div>
+            <div class="btn-add-member" onclick="addMemberField()"><span>＋</span> 添加成员（选填）</div>
           </div>
         </div>
         <div class="save-btn-wrap">
-          <button class="btn-full" id="btnCreateAccount" onclick="createAccount()">鍒涘缓璐︽埛</button>
+          <button class="btn-full" id="btnCreateAccount" onclick="createAccount()">创建账户</button>
         </div>
       </div>
     </div>
 
-    <div class="bottom-action" id="bottomCreate"><button class="btn-full" onclick="goCreateAccount()">锛?鍒涘缓鏂拌处鎴?/button></div>
-    <div class="bottom-action" id="bottomAccount" style="display:none"><button class="btn-full" onclick="goAddBill()">锛?娣诲姞璐﹀崟</button></div>
+    <div class="bottom-action" id="bottomCreate"><button class="btn-full" onclick="goCreateAccount()">＋ 创建新账户</button></div>
+    <div class="bottom-action" id="bottomAccount" style="display:none"><button class="btn-full" onclick="goAddBill()">＋ 添加账单</button></div>
 
     <div class="overlay" id="deleteOverlay" onclick="closeSheet(event)">
       <div class="sheet" onclick="event.stopPropagation()">
-        <div class="sheet-title" id="sheetTitle">鎿嶄綔</div>
+        <div class="sheet-title" id="sheetTitle">操作</div>
         <div class="sheet-msg" id="sheetMsg"></div>
-        <button class="sheet-btn danger" id="sheetConfirm" onclick="confirmDelete()">鍒犻櫎</button>
-        <button class="sheet-btn cancel" onclick="closeSheet()">鍙栨秷</button>
+        <button class="sheet-btn danger" id="sheetConfirm" onclick="confirmDelete()">删除</button>
+        <button class="sheet-btn cancel" onclick="closeSheet()">取消</button>
       </div>
     </div>
 
     <!-- Backup Sheet -->
     <div class="overlay" id="backupOverlay" onclick="closeBackupSheet(event)">
       <div class="sheet" onclick="event.stopPropagation()">
-        <div class="sheet-title">鏁版嵁澶囦唤</div>
-        <div class="sheet-msg">灏嗘暟鎹鍑轰负鏂囦欢淇濆瓨鍒版墜鏈猴紝鎴栦粠澶囦唤鏂囦欢鎭㈠鏁版嵁</div>
-        <button class="sheet-btn" onclick="exportData()">馃摛 瀵煎嚭澶囦唤</button>
-        <button class="sheet-btn" onclick="triggerImport()">馃摜 浠庡浠芥仮澶?/button>
-        <button class="sheet-btn cancel" onclick="closeBackupSheet()">鍙栨秷</button>
+        <div class="sheet-title">数据备份</div>
+        <div class="sheet-msg">将数据导出为文件保存到手机，或从备份文件恢复数据</div>
+        <button class="sheet-btn" onclick="exportData()">📤 导出备份</button>
+        <button class="sheet-btn" onclick="triggerImport()">📥 从备份恢复</button>
+        <button class="sheet-btn cancel" onclick="closeBackupSheet()">取消</button>
       </div>
     </div>
 
@@ -386,22 +386,22 @@
       }
 
       if (page === 'home') {
-        showNav('铚昏湏璐︽湰', false, false);
+        showNav('蜻蜓账本', false, false);
         showBottom('create');
         if (fabAdd) fabAdd.style.display = 'none';
         renderHome();
       } else if (page === 'account') {
-        showNav('璐︽埛璇︽儏', true, true);
+        showNav('账户详情', true, true);
         showBottom('bill');
         if (fabAdd) fabAdd.style.display = 'flex';
         renderAccountDetail();
       } else if (page === 'add-bill') {
-        showNav(editingBillId ? '缂栬緫璐﹀崟' : '娣诲姞璐﹀崟', true, false);
+        showNav(editingBillId ? '编辑账单' : '添加账单', true, false);
         showBottom('none');
         if (fabAdd) fabAdd.style.display = 'none';
         resetAddBillForm();
       } else if (page === 'create-account') {
-        showNav(editingAccountId ? '缂栬緫璐︽埛' : '鍒涘缓璐︽埛', true, false);
+        showNav(editingAccountId ? '编辑账户' : '创建账户', true, false);
         showBottom('none');
         if (fabAdd) fabAdd.style.display = 'none';
         resetCreateForm();
@@ -418,32 +418,32 @@
       listEl.innerHTML = accounts.map(a => {
         const s = getStats(a.id);
         return `<div class="account-card" onclick="goAccountDetail('${a.id}')" oncontextmenu="event.preventDefault();showDeleteAccountSheet('${a.id}','${escapeHtml(a.name)}')">
-          <div class="card-top"><span class="card-name">${escapeHtml(a.name)}</span><div class="card-tags"><span class="tag">馃懃 ${a.members?.length||0}浜?/span><span class="tag">馃搵 ${s.billCount}绗?/span></div></div>
+          <div class="card-top"><span class="card-name">${escapeHtml(a.name)}</span><div class="card-tags"><span class="tag">👥 ${a.members?.length||0}人</span><span class="tag">📋 ${s.billCount}笔</span></div></div>
           <div class="card-stats">
-            <div class="stat"><div class="stat-label">鎬绘敹鍏?/div><div class="stat-value income">楼${fmt(s.totalIncome)}</div></div>
-            <div class="stat"><div class="stat-label">鎬绘敮鍑?/div><div class="stat-value expense">楼${fmt(s.totalExpense)}</div></div>
-            <div class="stat"><div class="stat-label">浣欓</div><div class="stat-value ${s.balance>=0?'balance':'expense'}">楼${fmt(s.balance)}</div></div>
+            <div class="stat"><div class="stat-label">总收入</div><div class="stat-value income">¥${fmt(s.totalIncome)}</div></div>
+            <div class="stat"><div class="stat-label">总支出</div><div class="stat-value expense">¥${fmt(s.totalExpense)}</div></div>
+            <div class="stat"><div class="stat-label">余额</div><div class="stat-value ${s.balance>=0?'balance':'expense'}">¥${fmt(s.balance)}</div></div>
           </div></div>`;
       }).join('');
     }
     function showDeleteAccountSheet(id, name) {
       pendingDelete = { type:'account', id, name };
-      document.getElementById('sheetTitle').textContent='鍒犻櫎璐︽埛';
-      document.getElementById('sheetMsg').textContent=`纭畾瑕佸垹闄ゃ€?{name}銆嶅悧锛熻璐︽埛涓嬬殑鎵€鏈夎处鍗曚篃浼氳鍒犻櫎銆俙;
-      document.getElementById('sheetConfirm').textContent='鍒犻櫎璐︽埛';
+      document.getElementById('sheetTitle').textContent='删除账户';
+      document.getElementById('sheetMsg').textContent=`确定要删除「${name}」吗？该账户下的所有账单也会被删除。`;
+      document.getElementById('sheetConfirm').textContent='删除账户';
       document.getElementById('deleteOverlay').classList.add('show');
     }
 
     /* ========== Account Detail ========== */
     function renderAccountDetail() {
       const account = getAccounts().find(a => a.id === currentAccountId);
-      if (!account) { showToast('璐︽埛涓嶅瓨鍦?); goBack(); return; }
+      if (!account) { showToast('账户不存在'); goBack(); return; }
       document.getElementById('accountInfo').innerHTML = `<div class="info-name">${escapeHtml(account.name)}</div><div class="info-members">${(account.members||[]).map(m=>`<span class="member-chip">${escapeHtml(m)}</span>`).join('')}</div>`;
       const s = getStats(currentAccountId);
       document.getElementById('statsRow').innerHTML = `
-        <div class="stats-card"><div class="s-icon">馃挵</div><div class="s-label">鎬绘敹鍏?/div><div class="s-value green">楼${fmt(s.totalIncome)}</div></div>
-        <div class="stats-card"><div class="s-icon">馃捀</div><div class="s-label">鎬绘敮鍑?/div><div class="s-value red">楼${fmt(s.totalExpense)}</div></div>
-        <div class="stats-card"><div class="s-icon">${s.balance>=0?'馃彟':'鈿狅笍'}</div><div class="s-label">浣欓</div><div class="s-value ${s.balance>=0?'blue':'red'}">楼${fmt(s.balance)}</div></div>`;
+        <div class="stats-card"><div class="s-icon">💰</div><div class="s-label">总收入</div><div class="s-value green">¥${fmt(s.totalIncome)}</div></div>
+        <div class="stats-card"><div class="s-icon">💸</div><div class="s-label">总支出</div><div class="s-value red">¥${fmt(s.totalExpense)}</div></div>
+        <div class="stats-card"><div class="s-icon">${s.balance>=0?'🏦':'⚠️'}</div><div class="s-label">余额</div><div class="s-value ${s.balance>=0?'blue':'red'}">¥${fmt(s.balance)}</div></div>`;
       document.querySelectorAll('#filterTabs .filter-tab').forEach(tab => tab.classList.toggle('active', tab.dataset.filter===currentFilter));
       renderBillList();
     }
@@ -460,17 +460,17 @@
       const groups={};
       bills.forEach(b=>{ if(!groups[b.date]) groups[b.date]={date:b.date,bills:[],dayIncome:0,dayExpense:0}; groups[b.date].bills.push(b); if(b.type==='income') groups[b.date].dayIncome+=Number(b.amount); else groups[b.date].dayExpense+=Number(b.amount); });
       listEl.innerHTML = Object.values(groups).map(g=>`<div class="date-group">
-        <div class="date-header"><span class="day">${g.date}</span><span class="day-summary">${g.dayIncome>0?`<span class="in">鏀?楼${fmt(g.dayIncome)}</span>`:''}${g.dayExpense>0?`<span class="out">鏀?楼${fmt(g.dayExpense)}</span>`:''}</span></div>
+        <div class="date-header"><span class="day">${g.date}</span><span class="day-summary">${g.dayIncome>0?`<span class="in">收 ¥${fmt(g.dayIncome)}</span>`:''}${g.dayExpense>0?`<span class="out">支 ¥${fmt(g.dayExpense)}</span>`:''}</span></div>
         ${g.bills.map(b=>`<div class="bill-item" onclick="goEditBill('${b.id}')" oncontextmenu="event.preventDefault();showDeleteBillSheet('${b.id}')">
-          <div class="bill-left"><div class="bill-icon ${b.type==='income'?'inc':'exp'}">${b.type==='income'?'鏀?:'鏀?}</div><div class="bill-info"><div class="bill-src">${escapeHtml(b.source||'鏈娉?)}</div>${b.note?`<div class="bill-note">${escapeHtml(b.note)}</div>`:''}</div></div>
-          <div class="bill-amount ${b.type==='income'?'inc':'exp'}">${b.type==='income'?'+':'-'}楼${fmt(b.amount)}</div>
+          <div class="bill-left"><div class="bill-icon ${b.type==='income'?'inc':'exp'}">${b.type==='income'?'收':'支'}</div><div class="bill-info"><div class="bill-src">${escapeHtml(b.source||'未备注')}</div>${b.note?`<div class="bill-note">${escapeHtml(b.note)}</div>`:''}</div></div>
+          <div class="bill-amount ${b.type==='income'?'inc':'exp'}">${b.type==='income'?'+':'-'}¥${fmt(b.amount)}</div>
         </div>`).join('')}</div>`).join('');
     }
     function showDeleteBillSheet(billId) {
       pendingDelete = { type:'bill', id:billId };
-      document.getElementById('sheetTitle').textContent='鍒犻櫎璐﹀崟';
-      document.getElementById('sheetMsg').textContent='纭畾瑕佸垹闄よ繖鏉¤处鍗曞悧锛?;
-      document.getElementById('sheetConfirm').textContent='鍒犻櫎璐﹀崟';
+      document.getElementById('sheetTitle').textContent='删除账单';
+      document.getElementById('sheetMsg').textContent='确定要删除这条账单吗？';
+      document.getElementById('sheetConfirm').textContent='删除账单';
       document.getElementById('deleteOverlay').classList.add('show');
     }
 
@@ -481,9 +481,9 @@
       billType = type;
       document.getElementById('tabExpense').classList.toggle('active', type==='expense');
       document.getElementById('tabIncome').classList.toggle('active', type==='income');
-      document.getElementById('amountLabel').innerHTML = (type==='income'?'鏀跺叆閲戦':'鏀嚭閲戦') + ' <span class="required">*</span>';
-      document.getElementById('sourceLabel').innerHTML = type==='income'?'璧勯噾鏉ユ簮 <span class="required">*</span>':'鍘诲悜 <span class="required">*</span>';
-      document.getElementById('inputSource').placeholder = type==='income'?'渚嬪锛氬伐璧勩€佸閲?:'渚嬪锛氶楗€佽喘鐗?;
+      document.getElementById('amountLabel').innerHTML = (type==='income'?'收入金额':'支出金额') + ' <span class="required">*</span>';
+      document.getElementById('sourceLabel').innerHTML = type==='income'?'资金来源 <span class="required">*</span>':'去向 <span class="required">*</span>';
+      document.getElementById('inputSource').placeholder = type==='income'?'例如：工资、奖金':'例如：餐饮、购物';
       if (!editingBillId) document.getElementById('btnSaveBill').className = 'btn-save '+type;
     }
 
@@ -500,15 +500,15 @@
           billType = bill.type;
           document.getElementById('tabExpense').classList.toggle('active', billType==='expense');
           document.getElementById('tabIncome').classList.toggle('active', billType==='income');
-          document.getElementById('amountLabel').innerHTML = (billType==='income'?'鏀跺叆閲戦':'鏀嚭閲戦') + ' <span class="required">*</span>';
-          document.getElementById('sourceLabel').innerHTML = billType==='income'?'璧勯噾鏉ユ簮 <span class="required">*</span>':'鍘诲悜 <span class="required">*</span>';
-          document.getElementById('inputSource').placeholder = billType==='income'?'渚嬪锛氬伐璧勩€佸閲?:'渚嬪锛氶楗€佽喘鐗?;
+          document.getElementById('amountLabel').innerHTML = (billType==='income'?'收入金额':'支出金额') + ' <span class="required">*</span>';
+          document.getElementById('sourceLabel').innerHTML = billType==='income'?'资金来源 <span class="required">*</span>':'去向 <span class="required">*</span>';
+          document.getElementById('inputSource').placeholder = billType==='income'?'例如：工资、奖金':'例如：餐饮、购物';
           document.getElementById('inputAmount').value = String(bill.amount);
           document.getElementById('inputSource').value = bill.source || '';
           document.getElementById('inputNote').value = bill.note || '';
           document.getElementById('dateDisplay').textContent = bill.date;
           document.getElementById('inputDate').value = bill.date;
-          document.getElementById('btnSaveBill').textContent = '鏇存柊璐﹀崟';
+          document.getElementById('btnSaveBill').textContent = '更新账单';
           document.getElementById('btnSaveBill').className = 'btn-save ' + billType;
         } else {
           // Bill not found, fall back to new
@@ -521,15 +521,15 @@
         billType = 'income';
         document.getElementById('tabExpense').classList.remove('active');
         document.getElementById('tabIncome').classList.add('active');
-        document.getElementById('amountLabel').innerHTML = '鏀跺叆閲戦 <span class="required">*</span>';
-        document.getElementById('sourceLabel').innerHTML = '璧勯噾鏉ユ簮 <span class="required">*</span>';
+        document.getElementById('amountLabel').innerHTML = '收入金额 <span class="required">*</span>';
+        document.getElementById('sourceLabel').innerHTML = '资金来源 <span class="required">*</span>';
         document.getElementById('inputAmount').value = '';
         document.getElementById('inputSource').value = '';
         document.getElementById('inputNote').value = '';
-        document.getElementById('inputSource').placeholder = '渚嬪锛氬伐璧勩€佸閲?;
+        document.getElementById('inputSource').placeholder = '例如：工资、奖金';
         document.getElementById('dateDisplay').textContent = getToday();
         document.getElementById('inputDate').value = getToday();
-        document.getElementById('btnSaveBill').textContent = '淇濆瓨璐﹀崟';
+        document.getElementById('btnSaveBill').textContent = '保存账单';
         document.getElementById('btnSaveBill').className = 'btn-save income';
       }
     }
@@ -556,10 +556,10 @@
       const source = document.getElementById('inputSource').value.trim();
       const note = document.getElementById('inputNote').value.trim();
 
-      if (!amount || amount <= 0) { showToast('璇疯緭鍏ユ湁鏁堥噾棰?); billSubmitting = false; return; }
-      if (!date) { showToast('璇烽€夋嫨鏃ユ湡'); billSubmitting = false; return; }
+      if (!amount || amount <= 0) { showToast('请输入有效金额'); billSubmitting = false; return; }
+      if (!date) { showToast('请选择日期'); billSubmitting = false; return; }
       if (!source) {
-        showToast('璇疯緭鍏? + (billType==='income'?'璧勯噾鏉ユ簮':'鍘诲悜'));
+        showToast('请输入' + (billType==='income'?'资金来源':'去向'));
         billSubmitting = false;
         return;
       }
@@ -590,7 +590,7 @@
       }
 
       saveBills(bills);
-      showToast(editingBillId ? '宸叉洿鏂? : '淇濆瓨鎴愬姛');
+      showToast(editingBillId ? '已更新' : '保存成功');
       editingBillId = null;
       setTimeout(goBack, 500);
     }
@@ -615,7 +615,7 @@
             const input = document.getElementById('memberInput' + i);
             if (input) input.value = m;
           });
-          document.getElementById('btnCreateAccount').textContent = '淇濆瓨淇敼';
+          document.getElementById('btnCreateAccount').textContent = '保存修改';
         } else {
           editingAccountId = null;
           resetCreateForm();
@@ -626,7 +626,7 @@
         document.getElementById('inputAccountName').value = '';
         memberCount = 1;
         renderMemberFields();
-        document.getElementById('btnCreateAccount').textContent = '鍒涘缓璐︽埛';
+        document.getElementById('btnCreateAccount').textContent = '创建账户';
       }
     }
 
@@ -639,8 +639,8 @@
       for (let i = 0; i < memberCount; i++) {
         html += `<div class="member-row">
           <div class="m-index">${i+1}</div>
-          <input type="text" class="member-input" placeholder="鎴愬憳濮撳悕" maxlength="10" id="memberInput${i}">
-          ${memberCount>1?`<button class="btn-remove-member" onclick="removeMemberField(${i})">鉁?/button>`:''}
+          <input type="text" class="member-input" placeholder="成员姓名" maxlength="10" id="memberInput${i}">
+          ${memberCount>1?`<button class="btn-remove-member" onclick="removeMemberField(${i})">✕</button>`:''}
         </div>`;
       }
       container.innerHTML = html;
@@ -651,7 +651,7 @@
       accountSubmitting = true;
 
       const name = document.getElementById('inputAccountName').value.trim();
-      if (!name) { showToast('璇疯緭鍏ヨ处鎴峰悕绉?); accountSubmitting = false; return; }
+      if (!name) { showToast('请输入账户名称'); accountSubmitting = false; return; }
 
       const members = [];
       for (let i = 0; i < memberCount; i++) {
@@ -671,7 +671,7 @@
           accounts[idx].members = members;
         }
         saveAccounts(accounts);
-        showToast('宸叉洿鏂?);
+        showToast('已更新');
         // Go back to account detail
         navStack = ['home', 'account'];
         const eid = editingAccountId;
@@ -683,7 +683,7 @@
         const account = { id: uid(), name, members, createdAt: Date.now() };
         accounts.push(account);
         saveAccounts(accounts);
-        showToast('鍒涘缓鎴愬姛');
+        showToast('创建成功');
         currentAccountId = account.id;
         navStack = ['home', 'account'];
         setTimeout(() => renderPage('account', 'forward'), 500);
@@ -718,14 +718,14 @@
       // Create a download link and trigger it
       const a = document.createElement('a');
       a.href = url;
-      a.download = '铚昏湏璐︽湰_澶囦唤_' + getToday() + '.json';
+      a.download = '蜻蜓账本_备份_' + getToday() + '.json';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
       closeBackupSheet();
-      showToast('澶囦唤宸蹭笅杞?);
+      showToast('备份已下载');
     }
 
     function triggerImport() {
@@ -742,20 +742,20 @@
         try {
           const data = JSON.parse(e.target.result);
           if (!data.accounts || !data.bills) {
-            showToast('澶囦唤鏂囦欢鏍煎紡涓嶆纭?);
+            showToast('备份文件格式不正确');
             return;
           }
 
           // Show confirmation before overwriting
           pendingImport = data;
-          document.getElementById('sheetTitle').textContent = '鎭㈠澶囦唤';
+          document.getElementById('sheetTitle').textContent = '恢复备份';
           document.getElementById('sheetMsg').textContent =
-            `鍗冲皢鎭㈠ ${data.accounts.length} 涓处鎴枫€?{data.bills.length} 鏉¤处鍗曘€傚綋鍓嶆暟鎹皢琚鐩栵紝纭畾缁х画锛焋;
-          document.getElementById('sheetConfirm').textContent = '纭鎭㈠';
+            `即将恢复 ${data.accounts.length} 个账户、${data.bills.length} 条账单。当前数据将被覆盖，确定继续？`;
+          document.getElementById('sheetConfirm').textContent = '确认恢复';
           document.getElementById('sheetConfirm').className = 'sheet-btn';
           document.getElementById('deleteOverlay').classList.add('show');
         } catch (err) {
-          showToast('鏂囦欢瑙ｆ瀽澶辫触锛岃纭鏄湁鏁堢殑澶囦唤鏂囦欢');
+          showToast('文件解析失败，请确认是有效的备份文件');
         }
       };
       reader.readAsText(file);
@@ -773,7 +773,7 @@
         saveBills(data.bills);
         pendingImport = null;
         closeSheet();
-        showToast('鏁版嵁宸叉仮澶?);
+        showToast('数据已恢复');
         renderHome();
         return;
       }
@@ -789,14 +789,14 @@
         let bills = getBills().filter(b => b.accountId !== pendingDelete.id);
         saveBills(bills);
         closeSheet();
-        showToast('宸插垹闄?);
+        showToast('已删除');
         navStack = ['home']; currentAccountId = null;
         renderPage('home', 'back');
       } else if (pendingDelete.type === 'bill') {
         let bills = getBills().filter(b => b.id !== pendingDelete.id);
         saveBills(bills);
         closeSheet();
-        showToast('宸插垹闄?);
+        showToast('已删除');
         renderAccountDetail();
       }
       pendingDelete = null;
