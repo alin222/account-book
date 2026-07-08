@@ -944,13 +944,18 @@
 	          if (r.length <= accountIdx || !r[accountIdx].trim()) { skipped++; continue; }
 	          const accountName = r[accountIdx].trim();
 	          const date = (r[dateIdx] || '').trim();
-	          const typeStr = (r[typeIdx] || '').trim();
+	          const typeStr = (r[typeIdx] || '').replace(/[\u200B-\u200D\uFEFF]/g, '').trim();
 	          const amount = parseFloat(r[amountIdx]);
 	          const source = sourceIdx >= 0 ? (r[sourceIdx] || '').trim() : '';
 	          const note = noteIdx >= 0 ? (r[noteIdx] || '').trim() : '';
 	          const membersStr = membersIdx >= 0 ? (r[membersIdx] || '').trim() : '';
 	          if (!date || !typeStr || isNaN(amount) || amount <= 0) { skipped++; continue; }
-	          const type = typeStr === '收入' ? 'income' : 'expense';
+	          // Robust type detection: explicit match + fallback
+	          let type = 'expense';
+	          if (typeStr === '收入' || typeStr === '收') type = 'income';
+	          else if (typeStr === '支出' || typeStr === '支') type = 'expense';
+	          else if (typeStr.includes('收') && !typeStr.includes('支')) type = 'income';
+	          else if (typeStr.includes('支') && !typeStr.includes('收')) type = 'expense';
 	          let account = accounts.find(a => a.name === accountName);
 	          if (!account) {
 	            account = { id: uid(), name: accountName, members: [], createdAt: Date.now() };
