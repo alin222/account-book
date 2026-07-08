@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="铚昏湏璐︽湰">
+  <meta name="theme-color" content="#007AFF">
+  <title>铚昏湏璐︽湰</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23007AFF'/><text x='50' y='68' font-size='60' text-anchor='middle' fill='white'>馃搾</text></svg>">
+  <style>
+    :root {
+      --blue: #007AFF;
+      --blue-light: #E8F2FF;
+      --green: #34C759;
+      --green-light: #E9F8EC;
+      --red: #FF3B30;
+      --red-light: #FFECEB;
+      --orange: #FF9500;
+      --bg: #F2F2F7;
+      --card: #FFFFFF;
+      --separator: #E5E5EA;
+      --text: #1C1C1E;
+      --text-secondary: #8E8E93;
+      --text-tertiary: #C7C7CC;
+      --nav-height: 44px;
+      --safe-bottom: env(safe-area-inset-bottom, 16px);
+      --safe-top: env(safe-area-inset-top, 0px);
+    }
+    * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; -webkit-font-smoothing:antialiased; }
+    html, body { height:100%; overflow:hidden; font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue','PingFang SC',sans-serif; font-size:16px; color:var(--text); background:var(--bg); -webkit-user-select:none; user-select:none; }
+    #app { height:100%; max-width:480px; margin:0 auto; display:flex; flex-direction:column; background:var(--bg); position:relative; overflow:hidden; }
+    .nav-bar { background:rgba(242,242,247,0.85); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border-bottom:0.5px solid var(--separator); padding-top:var(--safe-top); position:relative; z-index:100; flex-shrink:0; }
+    .nav-content { height:var(--nav-height); display:flex; align-items:center; justify-content:center; padding:0 16px; position:relative; }
+    .nav-title { font-size:17px; font-weight:600; letter-spacing:-0.2px; color:var(--text); }
+    .nav-back { position:absolute; left:8px; top:50%; transform:translateY(-50%); display:flex; align-items:center; gap:2px; padding:8px 12px; font-size:17px; color:var(--blue); background:none; border:none; cursor:pointer; }
+    .nav-back svg { width:12px; height:20px; }
+    .nav-action { position:absolute; right:8px; top:50%; transform:translateY(-50%); padding:8px 12px; font-size:17px; color:var(--blue); font-weight:500; background:none; border:none; cursor:pointer; }
+    .main-content { flex:1; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch; scroll-behavior:smooth; }
+    .main-content::-webkit-scrollbar { display:none; }
+    .page { display:none; padding-bottom:100px; }
+    .page.active { display:block; animation:fadeIn 0.25s ease; }
+    @keyframes fadeIn { from{opacity:0;transform:translateX(20px);} to{opacity:1;transform:translateX(0);} }
+    @keyframes fadeInBack { from{opacity:0;transform:translateX(-20px);} to{opacity:1;transform:translateX(0);} }
+    .page.back-anim { animation:fadeInBack 0.25s ease; }
+
+    .home-header { padding:24px 20px 16px; }
+    .home-header h1 { font-size:34px; font-weight:700; letter-spacing:-0.5px; margin-bottom:4px; }
+    .home-header .subtitle { font-size:15px; color:var(--text-secondary); }
+    .backup-link { color:var(--blue); cursor:pointer; }
+    .account-list { padding:0 16px; }
+    .account-card { background:var(--card); border-radius:16px; padding:18px 20px; margin-bottom:12px; box-shadow:0 1px 3px rgba(0,0,0,0.04); cursor:pointer; transition:transform 0.15s; }
+    .account-card:active { transform:scale(0.985); }
+    .card-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+    .card-name { font-size:18px; font-weight:600; letter-spacing:-0.3px; }
+    .card-tags { display:flex; gap:6px; }
+    .tag { font-size:12px; color:var(--text-secondary); background:var(--bg); padding:3px 10px; border-radius:20px; font-weight:500; }
+    .card-stats { display:flex; justify-content:space-between; padding-top:12px; border-top:0.5px solid var(--separator); }
+    .stat { text-align:center; flex:1; }
+    .stat-label { font-size:12px; color:var(--text-secondary); margin-bottom:3px; }
+    .stat-value { font-size:17px; font-weight:600; letter-spacing:-0.3px; }
+    .stat-value.income { color:var(--green); }
+    .stat-value.expense { color:var(--red); }
+    .stat-value.balance { color:var(--blue); }
+    .empty-state { text-align:center; padding:80px 40px; }
+    .empty-state .icon { font-size:64px; margin-bottom:16px; opacity:0.6; }
+    .empty-state .text { font-size:17px; color:var(--text-secondary); margin-bottom:6px; }
+    .empty-state .sub { font-size:14px; color:var(--text-tertiary); }
+    .bottom-action { position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:480px; padding:12px 16px; padding-bottom:calc(12px + var(--safe-bottom)); background:rgba(242,242,247,0.85); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border-top:0.5px solid var(--separator); z-index:90; }
+    .btn-full { width:100%; padding:14px; font-size:17px; font-weight:600; color:#fff; background:var(--blue); border:none; border-radius:14px; cursor:pointer; letter-spacing:-0.2px; }
+    .btn-full:active { opacity:0.75; }
+    .fab { position:fixed; right:20px; bottom:100px; width:56px; height:56px; border-radius:50%; background:var(--blue); color:#fff; font-size:28px; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 16px rgba(0,122,255,0.35); border:none; cursor:pointer; z-index:80; transition:transform 0.15s; }
+    .fab:active { transform:scale(0.9); }
+
+    .account-info { background:var(--card); margin:16px; border-radius:16px; padding:20px; box-shadow:0 1px 3px rgba(0,0,0,0.04); }
+    .info-name { font-size:22px; font-weight:700; letter-spacing:-0.3px; margin-bottom:8px; }
+    .info-members { display:flex; flex-wrap:wrap; gap:6px; }
+    .member-chip { font-size:13px; color:var(--blue); background:var(--blue-light); padding:4px 12px; border-radius:20px; font-weight:500; }
+    .stats-row { display:flex; gap:10px; margin:0 16px 16px; }
+    .stats-card { flex:1; background:var(--card); border-radius:14px; padding:16px 12px; text-align:center; box-shadow:0 1px 3px rgba(0,0,0,0.04); }
+    .s-icon { font-size:28px; margin-bottom:6px; }
+    .s-label { font-size:12px; color:var(--text-secondary); margin-bottom:4px; }
+    .s-value { font-size:18px; font-weight:700; letter-spacing:-0.3px; }
+    .s-value.green { color:var(--green); } .s-value.red { color:var(--red); } .s-value.blue { color:var(--blue); }
+    .filter-tabs { display:flex; gap:0; margin:0 16px 12px; background:var(--card); border-radius:10px; padding:3px; box-shadow:0 1px 3px rgba(0,0,0,0.04); }
+    .filter-tab { flex:1; text-align:center; padding:8px 0; font-size:14px; font-weight:500; color:var(--text-secondary); border-radius:8px; cursor:pointer; transition:all 0.2s; background:none; border:none; }
+    .filter-tab.active { background:var(--card); color:var(--text); font-weight:600; box-shadow:0 1px 3px rgba(0,0,0,0.1); }
+    .bill-list { padding:0 16px; }
+    .date-group { margin-bottom:20px; }
+    .date-header { display:flex; justify-content:space-between; align-items:center; padding:8px 4px; }
+    .day { font-size:17px; font-weight:600; }
+    .day-summary { font-size:13px; color:var(--text-secondary); }
+    .day-summary .in { color:var(--green); margin-right:8px; }
+    .day-summary .out { color:var(--red); }
+    .bill-item { background:var(--card); border-radius:12px; padding:14px 16px; margin-bottom:6px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 1px 2px rgba(0,0,0,0.03); cursor:pointer; transition:transform 0.15s; }
+    .bill-item:active { transform:scale(0.985); }
+    .bill-left { display:flex; align-items:center; gap:12px; min-width:0; flex:1; }
+    .bill-icon { width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:700; color:#fff; flex-shrink:0; }
+    .bill-icon.inc { background:var(--green); }
+    .bill-icon.exp { background:var(--red); }
+    .bill-info { min-width:0; }
+    .bill-src { font-size:15px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .bill-note { font-size:13px; color:var(--text-secondary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:1px; }
+    .bill-amount { font-size:17px; font-weight:600; white-space:nowrap; margin-left:12px; }
+    .bill-amount.inc { color:var(--green); } .bill-amount.exp { color:var(--red); }
+
+    .type-tabs { display:flex; margin:16px 16px 0; gap:10px; }
+    .type-tab { flex:1; text-align:center; padding:12px; font-size:16px; font-weight:600; border-radius:12px; cursor:pointer; border:none; background:var(--card); color:var(--text-secondary); transition:all 0.2s; }
+    .type-tab.active.expense { background:var(--red); color:#fff; }
+    .type-tab.active.income { background:var(--green); color:#fff; }
+    .amount-box { margin:20px 16px; background:var(--card); border-radius:16px; padding:32px 24px; text-align:center; box-shadow:0 1px 3px rgba(0,0,0,0.04); }
+    .am-label { font-size:14px; color:var(--text-secondary); margin-bottom:12px; }
+    .am-row { display:flex; align-items:baseline; justify-content:center; }
+    .am-symbol { font-size:36px; font-weight:700; color:var(--text); margin-right:4px; }
+    .amount-box input { font-size:48px; font-weight:700; color:var(--text); border:none; outline:none; background:none; width:60%; text-align:center; border-bottom:3px solid var(--separator); padding-bottom:8px; letter-spacing:-1px; caret-color:var(--blue); }
+    .amount-box input::placeholder { color:var(--text-tertiary); }
+    .form-group { margin:0 16px 12px; background:var(--card); border-radius:14px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.04); }
+    .form-row { display:flex; align-items:center; padding:14px 18px; border-bottom:0.5px solid var(--separator); cursor:pointer; }
+    .form-row:last-child { border-bottom:none; }
+    .f-label { font-size:15px; font-weight:500; width:70px; flex-shrink:0; }
+    .required { color:var(--red); font-weight:700; margin-left:2px; }
+    .form-row input { flex:1; border:none; outline:none; font-size:15px; color:var(--text); background:none; text-align:right; caret-color:var(--blue); }
+    .form-row input::placeholder { color:var(--text-tertiary); }
+    .f-value { flex:1; text-align:right; font-size:15px; color:var(--text); }
+    .f-arrow { color:var(--text-tertiary); margin-left:6px; font-size:18px; }
+    .save-btn-wrap { margin:24px 16px; }
+    .btn-save { width:100%; padding:16px; font-size:17px; font-weight:600; color:#fff; border:none; border-radius:14px; cursor:pointer; letter-spacing:-0.2px; }
+    .btn-save.expense { background:var(--red); }
+    .btn-save.income { background:var(--green); }
+    .btn-save:active { opacity:0.75; }
+    .btn-save:disabled { opacity:0.5; cursor:default; }
+
+    .create-form { margin:16px; }
+    .create-form .form-group { margin:0 0 16px; }
+    .member-row { display:flex; align-items:center; padding:10px 18px; border-bottom:0.5px solid var(--separator); }
+    .member-row:last-child { border-bottom:none; }
+    .m-index { width:36px; height:36px; border-radius:50%; background:var(--blue-light); color:var(--blue); font-size:14px; font-weight:600; display:flex; align-items:center; justify-content:center; margin-right:12px; flex-shrink:0; }
+    .member-row input { flex:1; border:none; outline:none; font-size:15px; color:var(--text); background:none; caret-color:var(--blue); }
+    .member-row input::placeholder { color:var(--text-tertiary); }
+    .btn-remove-member { width:28px; height:28px; border-radius:50%; background:var(--red-light); color:var(--red); border:none; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; margin-left:8px; }
+    .btn-add-member { display:flex; align-items:center; justify-content:center; gap:4px; padding:14px; font-size:15px; color:var(--blue); font-weight:500; cursor:pointer; border-top:0.5px solid var(--separator); }
+    .btn-add-member span { font-size:20px; font-weight:300; }
+
+    .overlay { position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:200; display:none; align-items:flex-end; justify-content:center; }
+    .overlay.show { display:flex; }
+    .sheet { width:100%; max-width:480px; background:var(--card); border-radius:14px 14px 0 0; padding:20px 16px; padding-bottom:calc(20px + var(--safe-bottom)); animation:slideUp 0.25s ease; }
+    @keyframes slideUp { from{transform:translateY(100%);} to{transform:translateY(0);} }
+    .sheet-title { font-size:13px; color:var(--text-secondary); text-align:center; margin-bottom:12px; text-transform:uppercase; letter-spacing:0.5px; }
+    .sheet-msg { font-size:15px; text-align:center; color:var(--text); margin-bottom:20px; padding:0 16px; }
+    .sheet-btn { width:100%; padding:14px; font-size:17px; text-align:center; border-radius:12px; cursor:pointer; border:none; background:none; color:var(--blue); font-weight:500; margin-bottom:6px; }
+    .sheet-btn.danger { color:var(--red); font-weight:600; }
+    .sheet-btn.cancel { background:var(--bg); color:var(--text); font-weight:600; }
+    .toast { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%) scale(0.8); background:rgba(0,0,0,0.8); color:#fff; padding:12px 24px; border-radius:10px; font-size:15px; font-weight:500; z-index:300; pointer-events:none; opacity:0; transition:all 0.2s; }
+    .toast.show { opacity:1; transform:translate(-50%,-50%) scale(1); }
+
+    @media (min-width:481px) {
+      body { background:#E8E8ED; }
+      #app { border-left:1px solid var(--separator); border-right:1px solid var(--separator); box-shadow:0 0 40px rgba(0,0,0,0.08); }
+      .bottom-action, .fab { left:50%; right:auto; transform:translateX(-50%); }
+      .bottom-action { max-width:480px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="nav-bar" id="navBar">
+      <div class="nav-content">
+        <button class="nav-back" id="btnBack" style="display:none" onclick="goBack()">
+          <svg viewBox="0 0 12 20"><path d="M10 2L2 10l8 8" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <span class="nav-title" id="navTitle">铚昏湏璐︽湰</span>
+        <button class="nav-action" id="btnEdit" style="display:none" onclick="editAccount()">缂栬緫</button>
+      </div>
+    </div>
+
+    <div class="main-content" id="mainContent">
+      <!-- Home -->
+      <div class="page active" id="page-home">
+        <div class="home-header"><h1>铚昏湏璐︽湰</h1><p class="subtitle">杞绘澗绠＄悊澶氫汉鏀舵敮 路 <span class="backup-link" onclick="showBackupSheet()">澶囦唤</span></p></div>
+        <div class="account-list" id="accountList"></div>
+        <div class="empty-state" id="emptyHome" style="display:none">
+          <div class="icon">馃搾</div><div class="text">杩樻病鏈夎处鎴?/div><div class="sub">鐐瑰嚮涓嬫柟鎸夐挳鍒涘缓绗竴涓处鏈惂</div>
+        </div>
+        <!-- Hidden file input for import -->
+        <input type="file" id="importFile" accept=".json" style="display:none" onchange="handleImport(event)">
+      </div>
+
+      <!-- Account Detail -->
+      <div class="page" id="page-account">
+        <div class="account-info" id="accountInfo"></div>
+        <div class="stats-row" id="statsRow"></div>
+        <div class="filter-tabs" id="filterTabs">
+          <button class="filter-tab active" data-filter="all" onclick="setFilter('all')">鍏ㄩ儴</button>
+          <button class="filter-tab" data-filter="income" onclick="setFilter('income')">鏀跺叆</button>
+          <button class="filter-tab" data-filter="expense" onclick="setFilter('expense')">鏀嚭</button>
+        </div>
+        <div class="bill-list" id="billList"></div>
+        <div class="empty-state" id="emptyBills" style="display:none">
+          <div class="icon">馃摑</div><div class="text">鏆傛棤璐﹀崟璁板綍</div><div class="sub">鐐瑰嚮鍙充笅瑙掓寜閽坊鍔犺处鍗?/div>
+        </div>
+        <button class="fab" id="fabAdd" onclick="goAddBill()">锛?/button>
+      </div>
+
+      <!-- Add Bill -->
+      <div class="page" id="page-add-bill">
+        <div class="type-tabs">
+          <button class="type-tab expense" id="tabExpense" onclick="switchBillType('expense')">鏀嚭</button>
+          <button class="type-tab income active" id="tabIncome" onclick="switchBillType('income')">鏀跺叆</button>
+        </div>
+        <div class="amount-box">
+          <div class="am-label" id="amountLabel">鏀跺叆閲戦 <span class="required">*</span></div>
+          <div class="am-row"><span class="am-symbol">楼</span><input type="text" inputmode="decimal" id="inputAmount" placeholder="0.00" oninput="onAmountInput(this)"></div>
+        </div>
+        <div class="form-group">
+          <div class="form-row" onclick="document.getElementById('inputDate').showPicker()">
+            <span class="f-label">鏃ユ湡 <span class="required">*</span></span><span class="f-value" id="dateDisplay"></span><span class="f-arrow">鈥?/span>
+          </div>
+          <input type="date" id="inputDate" style="position:absolute;opacity:0;pointer-events:none;width:0;height:0" onchange="onDateChange(this)">
+          <div class="form-row"><span class="f-label" id="sourceLabel">璧勯噾鏉ユ簮 <span class="required">*</span></span><input type="text" id="inputSource" placeholder="渚嬪锛氬伐璧勩€佸閲? maxlength="50"></div>
+          <div class="form-row"><span class="f-label">澶囨敞</span><input type="text" id="inputNote" placeholder="娣诲姞澶囨敞锛堥€夊～锛? maxlength="100"></div>
+        </div>
+        <div class="save-btn-wrap">
+          <button class="btn-save income" id="btnSaveBill" onclick="saveBill()">淇濆瓨璐﹀崟</button>
+        </div>
+      </div>
+
+      <!-- Create/Edit Account -->
+      <div class="page" id="page-create-account">
+        <div class="create-form">
+          <div class="form-group">
+            <div class="form-row"><span class="f-label">鍚嶇О <span class="required">*</span></span><input type="text" id="inputAccountName" placeholder="渚嬪锛氬搴处鏈? maxlength="20"></div>
+          </div>
+          <div class="form-group">
+            <div id="memberList"></div>
+            <div class="btn-add-member" onclick="addMemberField()"><span>锛?/span> 娣诲姞鎴愬憳锛堥€夊～锛?/div>
+          </div>
+        </div>
+        <div class="save-btn-wrap">
+          <button class="btn-full" id="btnCreateAccount" onclick="createAccount()">鍒涘缓璐︽埛</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="bottom-action" id="bottomCreate"><button class="btn-full" onclick="goCreateAccount()">锛?鍒涘缓鏂拌处鎴?/button></div>
+    <div class="bottom-action" id="bottomAccount" style="display:none"><button class="btn-full" onclick="goAddBill()">锛?娣诲姞璐﹀崟</button></div>
+
+    <div class="overlay" id="deleteOverlay" onclick="closeSheet(event)">
+      <div class="sheet" onclick="event.stopPropagation()">
+        <div class="sheet-title" id="sheetTitle">鎿嶄綔</div>
+        <div class="sheet-msg" id="sheetMsg"></div>
+        <button class="sheet-btn danger" id="sheetConfirm" onclick="confirmDelete()">鍒犻櫎</button>
+        <button class="sheet-btn cancel" onclick="closeSheet()">鍙栨秷</button>
+      </div>
+    </div>
+
+    <!-- Backup Sheet -->
+    <div class="overlay" id="backupOverlay" onclick="closeBackupSheet(event)">
+      <div class="sheet" onclick="event.stopPropagation()">
+        <div class="sheet-title">鏁版嵁澶囦唤</div>
+        <div class="sheet-msg">灏嗘暟鎹鍑轰负鏂囦欢淇濆瓨鍒版墜鏈猴紝鎴栦粠澶囦唤鏂囦欢鎭㈠鏁版嵁</div>
+        <button class="sheet-btn" onclick="exportData()">馃摛 瀵煎嚭澶囦唤</button>
+        <button class="sheet-btn" onclick="triggerImport()">馃摜 浠庡浠芥仮澶?/button>
+        <button class="sheet-btn cancel" onclick="closeBackupSheet()">鍙栨秷</button>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+  </div>
+
+  <script>
+    /* ========== Data Layer ========== */
+    const STORAGE_ACCOUNTS = 'ab_accounts';
+    const STORAGE_BILLS = 'ab_bills';
+
+    function uid() {
+      return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+    }
+    function getAccounts() {
+      try { return JSON.parse(localStorage.getItem(STORAGE_ACCOUNTS)) || []; }
+      catch(e) { return []; }
+    }
+    function saveAccounts(arr) { localStorage.setItem(STORAGE_ACCOUNTS, JSON.stringify(arr)); }
+    function getBills() {
+      try { return JSON.parse(localStorage.getItem(STORAGE_BILLS)) || []; }
+      catch(e) { return []; }
+    }
+    function saveBills(arr) { localStorage.setItem(STORAGE_BILLS, JSON.stringify(arr)); }
+
+    function getStats(accountId) {
+      const bills = getBills().filter(b => b.accountId === accountId);
+      let income = 0, expense = 0;
+      bills.forEach(b => {
+        const amt = Number(b.amount) || 0;
+        if (b.type === 'income') income += amt;
+        else expense += amt;
+      });
+      return {
+        totalIncome: Math.round(income * 100) / 100,
+        totalExpense: Math.round(expense * 100) / 100,
+        balance: Math.round((income - expense) * 100) / 100,
+        billCount: bills.length
+      };
+    }
+    function fmt(n) {
+      const fixed = Number(n).toFixed(2);
+      const parts = fixed.split('.');
+      parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      return parts.join('.');
+    }
+    function fmtDate(d) {
+      if (!d) return '';
+      const dt = new Date(d);
+      return dt.getFullYear() + '-' + String(dt.getMonth()+1).padStart(2,'0') + '-' + String(dt.getDate()).padStart(2,'0');
+    }
+    function getToday() { return fmtDate(new Date()); }
+    function escapeHtml(str) { const d=document.createElement('div'); d.textContent=str; return d.innerHTML; }
+
+    /* ========== Navigation ========== */
+    let navStack = ['home'];
+    let currentAccountId = null;
+    let currentFilter = 'all';
+    let pendingDelete = null;
+    let pendingImport = null;
+    let editingBillId = null;      // bill being edited (null = new)
+    let editingAccountId = null;   // account being edited (null = new)
+    let billSubmitting = false;    // prevent double-save
+    let accountSubmitting = false;
+
+    function navigateTo(page, params) {
+      navStack.push(page);
+      currentAccountId = params?.accountId || currentAccountId;
+      editingBillId = params?.billId || null;
+      editingAccountId = params?.editAccountId || null;
+      renderPage(page, 'forward');
+    }
+
+    function goBack() {
+      if (navStack.length <= 1) return;
+      navStack.pop();
+      const prev = navStack[navStack.length - 1];
+      if (prev === 'home') currentAccountId = null;
+      editingBillId = null;
+      editingAccountId = null;
+      billSubmitting = false;
+      accountSubmitting = false;
+      renderPage(prev, 'back');
+    }
+
+    function goCreateAccount() { editingAccountId = null; navigateTo('create-account'); }
+    function goAccountDetail(id) { currentAccountId = id; navigateTo('account', { accountId: id }); }
+    function goAddBill() { editingBillId = null; navigateTo('add-bill'); }
+    function goEditBill(billId) { editingBillId = billId; navigateTo('add-bill', { billId }); }
+    function goEditAccountPage() {
+      if (!currentAccountId) return;
+      editingAccountId = currentAccountId;
+      navigateTo('create-account', { editAccountId: currentAccountId });
+    }
+
+    /* ========== Render ========== */
+    function renderPage(page, direction) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active', 'back-anim'));
+      const pageEl = document.getElementById('page-' + page);
+      if (pageEl) {
+        if (direction === 'back') pageEl.classList.add('back-anim');
+        pageEl.classList.add('active');
+      }
+      document.getElementById('mainContent').scrollTop = 0;
+
+      const btnBack = document.getElementById('btnBack');
+      const navTitle = document.getElementById('navTitle');
+      const btnEdit = document.getElementById('btnEdit');
+      const bottomCreate = document.getElementById('bottomCreate');
+      const bottomAccount = document.getElementById('bottomAccount');
+      const fabAdd = document.getElementById('fabAdd');
+
+      function showNav(title, showBack, showEdit) {
+        navTitle.textContent = title;
+        btnBack.style.display = showBack ? 'flex' : 'none';
+        btnEdit.style.display = showEdit ? 'block' : 'none';
+      }
+      function showBottom(which) {
+        bottomCreate.style.display = (which==='create') ? 'block' : 'none';
+        bottomAccount.style.display = (which==='bill') ? 'block' : 'none';
+      }
+
+      if (page === 'home') {
+        showNav('铚昏湏璐︽湰', false, false);
+        showBottom('create');
+        if (fabAdd) fabAdd.style.display = 'none';
+        renderHome();
+      } else if (page === 'account') {
+        showNav('璐︽埛璇︽儏', true, true);
+        showBottom('bill');
+        if (fabAdd) fabAdd.style.display = 'flex';
+        renderAccountDetail();
+      } else if (page === 'add-bill') {
+        showNav(editingBillId ? '缂栬緫璐﹀崟' : '娣诲姞璐﹀崟', true, false);
+        showBottom('none');
+        if (fabAdd) fabAdd.style.display = 'none';
+        resetAddBillForm();
+      } else if (page === 'create-account') {
+        showNav(editingAccountId ? '缂栬緫璐︽埛' : '鍒涘缓璐︽埛', true, false);
+        showBottom('none');
+        if (fabAdd) fabAdd.style.display = 'none';
+        resetCreateForm();
+      }
+    }
+
+    /* ========== Home ========== */
+    function renderHome() {
+      const accounts = getAccounts();
+      const listEl = document.getElementById('accountList');
+      const emptyEl = document.getElementById('emptyHome');
+      if (accounts.length === 0) { listEl.innerHTML=''; emptyEl.style.display='block'; return; }
+      emptyEl.style.display='none';
+      listEl.innerHTML = accounts.map(a => {
+        const s = getStats(a.id);
+        return `<div class="account-card" onclick="goAccountDetail('${a.id}')" oncontextmenu="event.preventDefault();showDeleteAccountSheet('${a.id}','${escapeHtml(a.name)}')">
+          <div class="card-top"><span class="card-name">${escapeHtml(a.name)}</span><div class="card-tags"><span class="tag">馃懃 ${a.members?.length||0}浜?/span><span class="tag">馃搵 ${s.billCount}绗?/span></div></div>
+          <div class="card-stats">
+            <div class="stat"><div class="stat-label">鎬绘敹鍏?/div><div class="stat-value income">楼${fmt(s.totalIncome)}</div></div>
+            <div class="stat"><div class="stat-label">鎬绘敮鍑?/div><div class="stat-value expense">楼${fmt(s.totalExpense)}</div></div>
+            <div class="stat"><div class="stat-label">浣欓</div><div class="stat-value ${s.balance>=0?'balance':'expense'}">楼${fmt(s.balance)}</div></div>
+          </div></div>`;
+      }).join('');
+    }
+    function showDeleteAccountSheet(id, name) {
+      pendingDelete = { type:'account', id, name };
+      document.getElementById('sheetTitle').textContent='鍒犻櫎璐︽埛';
+      document.getElementById('sheetMsg').textContent=`纭畾瑕佸垹闄ゃ€?{name}銆嶅悧锛熻璐︽埛涓嬬殑鎵€鏈夎处鍗曚篃浼氳鍒犻櫎銆俙;
+      document.getElementById('sheetConfirm').textContent='鍒犻櫎璐︽埛';
+      document.getElementById('deleteOverlay').classList.add('show');
+    }
+
+    /* ========== Account Detail ========== */
+    function renderAccountDetail() {
+      const account = getAccounts().find(a => a.id === currentAccountId);
+      if (!account) { showToast('璐︽埛涓嶅瓨鍦?); goBack(); return; }
+      document.getElementById('accountInfo').innerHTML = `<div class="info-name">${escapeHtml(account.name)}</div><div class="info-members">${(account.members||[]).map(m=>`<span class="member-chip">${escapeHtml(m)}</span>`).join('')}</div>`;
+      const s = getStats(currentAccountId);
+      document.getElementById('statsRow').innerHTML = `
+        <div class="stats-card"><div class="s-icon">馃挵</div><div class="s-label">鎬绘敹鍏?/div><div class="s-value green">楼${fmt(s.totalIncome)}</div></div>
+        <div class="stats-card"><div class="s-icon">馃捀</div><div class="s-label">鎬绘敮鍑?/div><div class="s-value red">楼${fmt(s.totalExpense)}</div></div>
+        <div class="stats-card"><div class="s-icon">${s.balance>=0?'馃彟':'鈿狅笍'}</div><div class="s-label">浣欓</div><div class="s-value ${s.balance>=0?'blue':'red'}">楼${fmt(s.balance)}</div></div>`;
+      document.querySelectorAll('#filterTabs .filter-tab').forEach(tab => tab.classList.toggle('active', tab.dataset.filter===currentFilter));
+      renderBillList();
+    }
+    function setFilter(filter) { currentFilter=filter; document.querySelectorAll('#filterTabs .filter-tab').forEach(t=>t.classList.toggle('active',t.dataset.filter===filter)); renderBillList(); }
+
+    function renderBillList() {
+      let bills = getBills().filter(b => b.accountId === currentAccountId);
+      if (currentFilter==='income') bills=bills.filter(b=>b.type==='income');
+      else if (currentFilter==='expense') bills=bills.filter(b=>b.type==='expense');
+      bills.sort((a,b)=>{ if(a.date!==b.date) return b.date.localeCompare(a.date); return (b.createdAt||0)-(a.createdAt||0); });
+      const listEl=document.getElementById('billList'), emptyEl=document.getElementById('emptyBills');
+      if(bills.length===0){ listEl.innerHTML=''; emptyEl.style.display='block'; return; }
+      emptyEl.style.display='none';
+      const groups={};
+      bills.forEach(b=>{ if(!groups[b.date]) groups[b.date]={date:b.date,bills:[],dayIncome:0,dayExpense:0}; groups[b.date].bills.push(b); if(b.type==='income') groups[b.date].dayIncome+=Number(b.amount); else groups[b.date].dayExpense+=Number(b.amount); });
+      listEl.innerHTML = Object.values(groups).map(g=>`<div class="date-group">
+        <div class="date-header"><span class="day">${g.date}</span><span class="day-summary">${g.dayIncome>0?`<span class="in">鏀?楼${fmt(g.dayIncome)}</span>`:''}${g.dayExpense>0?`<span class="out">鏀?楼${fmt(g.dayExpense)}</span>`:''}</span></div>
+        ${g.bills.map(b=>`<div class="bill-item" onclick="goEditBill('${b.id}')" oncontextmenu="event.preventDefault();showDeleteBillSheet('${b.id}')">
+          <div class="bill-left"><div class="bill-icon ${b.type==='income'?'inc':'exp'}">${b.type==='income'?'鏀?:'鏀?}</div><div class="bill-info"><div class="bill-src">${escapeHtml(b.source||'鏈娉?)}</div>${b.note?`<div class="bill-note">${escapeHtml(b.note)}</div>`:''}</div></div>
+          <div class="bill-amount ${b.type==='income'?'inc':'exp'}">${b.type==='income'?'+':'-'}楼${fmt(b.amount)}</div>
+        </div>`).join('')}</div>`).join('');
+    }
+    function showDeleteBillSheet(billId) {
+      pendingDelete = { type:'bill', id:billId };
+      document.getElementById('sheetTitle').textContent='鍒犻櫎璐﹀崟';
+      document.getElementById('sheetMsg').textContent='纭畾瑕佸垹闄よ繖鏉¤处鍗曞悧锛?;
+      document.getElementById('sheetConfirm').textContent='鍒犻櫎璐﹀崟';
+      document.getElementById('deleteOverlay').classList.add('show');
+    }
+
+    /* ========== Add Bill (new + edit) ========== */
+    let billType = 'income';
+
+    function switchBillType(type) {
+      billType = type;
+      document.getElementById('tabExpense').classList.toggle('active', type==='expense');
+      document.getElementById('tabIncome').classList.toggle('active', type==='income');
+      document.getElementById('amountLabel').innerHTML = (type==='income'?'鏀跺叆閲戦':'鏀嚭閲戦') + ' <span class="required">*</span>';
+      document.getElementById('sourceLabel').innerHTML = type==='income'?'璧勯噾鏉ユ簮 <span class="required">*</span>':'鍘诲悜 <span class="required">*</span>';
+      document.getElementById('inputSource').placeholder = type==='income'?'渚嬪锛氬伐璧勩€佸閲?:'渚嬪锛氶楗€佽喘鐗?;
+      if (!editingBillId) document.getElementById('btnSaveBill').className = 'btn-save '+type;
+    }
+
+    function resetAddBillForm() {
+      billSubmitting = false;
+      const btn = document.getElementById('btnSaveBill');
+      btn.disabled = false;
+
+      if (editingBillId) {
+        // Edit mode: pre-fill from existing bill
+        const bills = getBills();
+        const bill = bills.find(b => b.id === editingBillId);
+        if (bill) {
+          billType = bill.type;
+          document.getElementById('tabExpense').classList.toggle('active', billType==='expense');
+          document.getElementById('tabIncome').classList.toggle('active', billType==='income');
+          document.getElementById('amountLabel').innerHTML = (billType==='income'?'鏀跺叆閲戦':'鏀嚭閲戦') + ' <span class="required">*</span>';
+          document.getElementById('sourceLabel').innerHTML = billType==='income'?'璧勯噾鏉ユ簮 <span class="required">*</span>':'鍘诲悜 <span class="required">*</span>';
+          document.getElementById('inputSource').placeholder = billType==='income'?'渚嬪锛氬伐璧勩€佸閲?:'渚嬪锛氶楗€佽喘鐗?;
+          document.getElementById('inputAmount').value = String(bill.amount);
+          document.getElementById('inputSource').value = bill.source || '';
+          document.getElementById('inputNote').value = bill.note || '';
+          document.getElementById('dateDisplay').textContent = bill.date;
+          document.getElementById('inputDate').value = bill.date;
+          document.getElementById('btnSaveBill').textContent = '鏇存柊璐﹀崟';
+          document.getElementById('btnSaveBill').className = 'btn-save ' + billType;
+        } else {
+          // Bill not found, fall back to new
+          editingBillId = null;
+          resetAddBillForm();
+          return;
+        }
+      } else {
+        // New mode
+        billType = 'income';
+        document.getElementById('tabExpense').classList.remove('active');
+        document.getElementById('tabIncome').classList.add('active');
+        document.getElementById('amountLabel').innerHTML = '鏀跺叆閲戦 <span class="required">*</span>';
+        document.getElementById('sourceLabel').innerHTML = '璧勯噾鏉ユ簮 <span class="required">*</span>';
+        document.getElementById('inputAmount').value = '';
+        document.getElementById('inputSource').value = '';
+        document.getElementById('inputNote').value = '';
+        document.getElementById('inputSource').placeholder = '渚嬪锛氬伐璧勩€佸閲?;
+        document.getElementById('dateDisplay').textContent = getToday();
+        document.getElementById('inputDate').value = getToday();
+        document.getElementById('btnSaveBill').textContent = '淇濆瓨璐﹀崟';
+        document.getElementById('btnSaveBill').className = 'btn-save income';
+      }
+    }
+
+    function onAmountInput(el) {
+      let v = el.value.replace(/[^\d.]/g, '');
+      const parts = v.split('.');
+      if (parts.length > 2) v = parts[0] + '.' + parts.slice(1).join('');
+      if (parts.length === 2 && parts[1].length > 2) v = parts[0] + '.' + parts[1].slice(0, 2);
+      if (v !== el.value) el.value = v;
+    }
+
+    function onDateChange(el) {
+      document.getElementById('dateDisplay').textContent = el.value;
+    }
+
+    function saveBill() {
+      // Guard against double submission (fixes iOS double-tap bug)
+      if (billSubmitting) return;
+      billSubmitting = true;
+
+      const amount = parseFloat(document.getElementById('inputAmount').value);
+      const date = document.getElementById('dateDisplay').textContent;
+      const source = document.getElementById('inputSource').value.trim();
+      const note = document.getElementById('inputNote').value.trim();
+
+      if (!amount || amount <= 0) { showToast('璇疯緭鍏ユ湁鏁堥噾棰?); billSubmitting = false; return; }
+      if (!date) { showToast('璇烽€夋嫨鏃ユ湡'); billSubmitting = false; return; }
+      if (!source) {
+        showToast('璇疯緭鍏? + (billType==='income'?'璧勯噾鏉ユ簮':'鍘诲悜'));
+        billSubmitting = false;
+        return;
+      }
+
+      // Disable button to prevent any further clicks
+      const btn = document.getElementById('btnSaveBill');
+      btn.disabled = true;
+
+      const bills = getBills();
+      const billData = {
+        id: editingBillId || uid(),
+        accountId: currentAccountId,
+        type: billType,
+        amount: Math.round(amount * 100) / 100,
+        date: date,
+        source: source,
+        note: note,
+        createdAt: editingBillId ? (bills.find(b=>b.id===editingBillId)?.createdAt || Date.now()) : Date.now()
+      };
+
+      if (editingBillId) {
+        // Update existing
+        const idx = bills.findIndex(b => b.id === editingBillId);
+        if (idx !== -1) bills[idx] = billData;
+      } else {
+        // Create new
+        bills.push(billData);
+      }
+
+      saveBills(bills);
+      showToast(editingBillId ? '宸叉洿鏂? : '淇濆瓨鎴愬姛');
+      editingBillId = null;
+      setTimeout(goBack, 500);
+    }
+
+    /* ========== Create / Edit Account ========== */
+    let memberCount = 1;
+
+    function resetCreateForm() {
+      accountSubmitting = false;
+      const btn = document.getElementById('btnCreateAccount');
+      btn.disabled = false;
+
+      if (editingAccountId) {
+        // Edit mode
+        const account = getAccounts().find(a => a.id === editingAccountId);
+        if (account) {
+          document.getElementById('inputAccountName').value = account.name || '';
+          memberCount = Math.max(1, (account.members || []).length);
+          renderMemberFields();
+          // Fill member inputs
+          (account.members || []).forEach((m, i) => {
+            const input = document.getElementById('memberInput' + i);
+            if (input) input.value = m;
+          });
+          document.getElementById('btnCreateAccount').textContent = '淇濆瓨淇敼';
+        } else {
+          editingAccountId = null;
+          resetCreateForm();
+          return;
+        }
+      } else {
+        // New mode
+        document.getElementById('inputAccountName').value = '';
+        memberCount = 1;
+        renderMemberFields();
+        document.getElementById('btnCreateAccount').textContent = '鍒涘缓璐︽埛';
+      }
+    }
+
+    function addMemberField() { memberCount++; renderMemberFields(); }
+    function removeMemberField(index) { if (memberCount <= 1) return; memberCount--; renderMemberFields(); }
+
+    function renderMemberFields() {
+      const container = document.getElementById('memberList');
+      let html = '';
+      for (let i = 0; i < memberCount; i++) {
+        html += `<div class="member-row">
+          <div class="m-index">${i+1}</div>
+          <input type="text" class="member-input" placeholder="鎴愬憳濮撳悕" maxlength="10" id="memberInput${i}">
+          ${memberCount>1?`<button class="btn-remove-member" onclick="removeMemberField(${i})">鉁?/button>`:''}
+        </div>`;
+      }
+      container.innerHTML = html;
+    }
+
+    function createAccount() {
+      if (accountSubmitting) return;
+      accountSubmitting = true;
+
+      const name = document.getElementById('inputAccountName').value.trim();
+      if (!name) { showToast('璇疯緭鍏ヨ处鎴峰悕绉?); accountSubmitting = false; return; }
+
+      const members = [];
+      for (let i = 0; i < memberCount; i++) {
+        const input = document.getElementById('memberInput' + i);
+        if (input) { const v = input.value.trim(); if (v) members.push(v); }
+      }
+      if (members.length === 0) { /* members are optional */ }
+
+      document.getElementById('btnCreateAccount').disabled = true;
+
+      const accounts = getAccounts();
+      if (editingAccountId) {
+        // Update existing
+        const idx = accounts.findIndex(a => a.id === editingAccountId);
+        if (idx !== -1) {
+          accounts[idx].name = name;
+          accounts[idx].members = members;
+        }
+        saveAccounts(accounts);
+        showToast('宸叉洿鏂?);
+        // Go back to account detail
+        navStack = ['home', 'account'];
+        const eid = editingAccountId;
+        editingAccountId = null;
+        currentAccountId = eid;
+        setTimeout(() => renderPage('account', 'forward'), 500);
+      } else {
+        // Create new
+        const account = { id: uid(), name, members, createdAt: Date.now() };
+        accounts.push(account);
+        saveAccounts(accounts);
+        showToast('鍒涘缓鎴愬姛');
+        currentAccountId = account.id;
+        navStack = ['home', 'account'];
+        setTimeout(() => renderPage('account', 'forward'), 500);
+      }
+    }
+
+    function editAccount() {
+      goEditAccountPage();
+    }
+
+    /* ========== Backup / Restore ========== */
+    function showBackupSheet() {
+      document.getElementById('backupOverlay').classList.add('show');
+    }
+
+    function closeBackupSheet(e) {
+      if (e && e.target !== document.getElementById('backupOverlay')) return;
+      document.getElementById('backupOverlay').classList.remove('show');
+    }
+
+    function exportData() {
+      const data = {
+        accounts: getAccounts(),
+        bills: getBills(),
+        exportedAt: new Date().toISOString(),
+        version: 1
+      };
+      const json = JSON.stringify(data, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+
+      // Create a download link and trigger it
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = '铚昏湏璐︽湰_澶囦唤_' + getToday() + '.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      closeBackupSheet();
+      showToast('澶囦唤宸蹭笅杞?);
+    }
+
+    function triggerImport() {
+      closeBackupSheet();
+      document.getElementById('importFile').click();
+    }
+
+    function handleImport(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (!data.accounts || !data.bills) {
+            showToast('澶囦唤鏂囦欢鏍煎紡涓嶆纭?);
+            return;
+          }
+
+          // Show confirmation before overwriting
+          pendingImport = data;
+          document.getElementById('sheetTitle').textContent = '鎭㈠澶囦唤';
+          document.getElementById('sheetMsg').textContent =
+            `鍗冲皢鎭㈠ ${data.accounts.length} 涓处鎴枫€?{data.bills.length} 鏉¤处鍗曘€傚綋鍓嶆暟鎹皢琚鐩栵紝纭畾缁х画锛焋;
+          document.getElementById('sheetConfirm').textContent = '纭鎭㈠';
+          document.getElementById('sheetConfirm').className = 'sheet-btn';
+          document.getElementById('deleteOverlay').classList.add('show');
+        } catch (err) {
+          showToast('鏂囦欢瑙ｆ瀽澶辫触锛岃纭鏄湁鏁堢殑澶囦唤鏂囦欢');
+        }
+      };
+      reader.readAsText(file);
+
+      // Reset file input for re-import
+      event.target.value = '';
+    }
+
+    // Override confirmDelete to also handle import confirmation
+    const origConfirmDelete = confirmDelete;
+    confirmDelete = function() {
+      if (pendingImport) {
+        const data = pendingImport;
+        saveAccounts(data.accounts);
+        saveBills(data.bills);
+        pendingImport = null;
+        closeSheet();
+        showToast('鏁版嵁宸叉仮澶?);
+        renderHome();
+        return;
+      }
+      origConfirmDelete();
+    };
+
+    /* ========== Delete ========== */
+    function confirmDelete() {
+      if (!pendingDelete) return;
+      if (pendingDelete.type === 'account') {
+        let accounts = getAccounts().filter(a => a.id !== pendingDelete.id);
+        saveAccounts(accounts);
+        let bills = getBills().filter(b => b.accountId !== pendingDelete.id);
+        saveBills(bills);
+        closeSheet();
+        showToast('宸插垹闄?);
+        navStack = ['home']; currentAccountId = null;
+        renderPage('home', 'back');
+      } else if (pendingDelete.type === 'bill') {
+        let bills = getBills().filter(b => b.id !== pendingDelete.id);
+        saveBills(bills);
+        closeSheet();
+        showToast('宸插垹闄?);
+        renderAccountDetail();
+      }
+      pendingDelete = null;
+    }
+
+    function closeSheet(e) {
+      if (e && e.target !== document.getElementById('deleteOverlay')) return;
+      document.getElementById('deleteOverlay').classList.remove('show');
+      pendingDelete = null;
+    }
+
+    /* ========== Toast ========== */
+    let toastTimer;
+    function showToast(msg) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.remove('show'), 1500);
+    }
+
+    /* ========== Init ========== */
+    function init() {
+      document.getElementById('dateDisplay').textContent = getToday();
+      document.getElementById('inputDate').value = getToday();
+      renderMemberFields();
+      renderHome();
+
+      document.addEventListener('touchstart', function(e) {
+        if (e.target.tagName === 'BUTTON' && e.touches.length > 1) e.preventDefault();
+      }, { passive: false });
+
+      history.replaceState({ page: 'home' }, '', '#home');
+
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      }
+    }
+
+    let programmaticNav = false;
+    const origNavigateTo = navigateTo;
+    navigateTo = function(page, params) {
+      origNavigateTo(page, params);
+      programmaticNav = true;
+      history.pushState({ page }, '', '#' + page);
+    };
+    const origGoBack = goBack;
+    goBack = function() {
+      if (navStack.length <= 1) return;
+      origGoBack();
+      programmaticNav = true;
+      history.back();
+    };
+    window.addEventListener('popstate', function(e) {
+      if (programmaticNav) { programmaticNav = false; return; }
+      if (navStack.length > 1) {
+        navStack.pop();
+        const prev = navStack[navStack.length - 1];
+        if (prev === 'home') currentAccountId = null;
+        editingBillId = null; editingAccountId = null;
+        billSubmitting = false; accountSubmitting = false;
+        renderPage(prev, 'back');
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
