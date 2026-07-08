@@ -9,7 +9,7 @@
   <meta name="theme-color" content="#007AFF">
   <title>蜻蜓账本</title>
   <link rel="manifest" href="manifest.json">
-  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23007AFF'/><text x='50' y='68' font-size='60' text-anchor='middle' fill='white'>📒</text></svg>">
+	  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'><defs><style>.w{fill:white;opacity:0.35}</style></defs><rect width='120' height='120' rx='26' fill='%23007AFF'/><ellipse class='w' cx='36' cy='50' rx='28' ry='10' transform='rotate(-25 36 50)'/><ellipse class='w' cx='84' cy='50' rx='28' ry='10' transform='rotate(25 84 50)'/><ellipse class='w' cx='38' cy='65' rx='22' ry='8' transform='rotate(-15 38 65)'/><ellipse class='w' cx='82' cy='65' rx='22' ry='8' transform='rotate(15 82 65)'/><rect x='54' y='28' width='12' height='60' rx='6' fill='white'/><circle cx='60' cy='25' r='11' fill='white'/><circle cx='55' cy='22' r='4' fill='%23007AFF'/><circle cx='65' cy='22' r='4' fill='%23007AFF'/></svg>">
   <style>
     :root {
       --blue: #007AFF;
@@ -47,8 +47,11 @@
     .page.back-anim { animation:fadeInBack 0.25s ease; }
 
     .home-header { padding:24px 20px 16px; }
-    .home-header h1 { font-size:34px; font-weight:700; letter-spacing:-0.5px; margin-bottom:4px; }
-    .home-header .subtitle { font-size:15px; color:var(--text-secondary); }
+	    .home-header h1 { font-size:34px; font-weight:700; letter-spacing:-0.5px; margin-bottom:4px; }
+	    .home-header .subtitle { font-size:15px; color:var(--text-secondary); }
+	    .daily-slogan { margin:0 16px 8px; padding:14px 18px; background:linear-gradient(135deg, var(--blue-light), #E8F0FF); border-radius:14px; text-align:center; }
+	    .daily-slogan .slogan-text { font-size:15px; font-weight:600; color:var(--blue); letter-spacing:-0.2px; }
+	    .daily-slogan .slogan-date { font-size:11px; color:var(--text-secondary); margin-top:4px; }
     .backup-link { color:var(--blue); cursor:pointer; }
     .account-list { padding:0 16px; }
     .account-card { background:var(--card); border-radius:16px; padding:18px 20px; margin-bottom:12px; box-shadow:0 1px 3px rgba(0,0,0,0.04); cursor:pointer; transition:transform 0.15s; }
@@ -190,7 +193,11 @@
     <div class="main-content" id="mainContent">
       <!-- Home -->
       <div class="page active" id="page-home">
-        <div class="home-header"><h1>蜻蜓账本</h1><p class="subtitle">轻松管理多人收支 · <span class="backup-link" onclick="showBackupSheet()">备份</span></p></div>
+	        <div class="home-header"><h1>蜻蜓账本</h1><p class="subtitle">轻松管理多人收支 · <span class="backup-link" onclick="showBackupSheet()">备份</span></p></div>
+	        <div class="daily-slogan" id="dailySlogan">
+	          <div class="slogan-text" id="sloganText"></div>
+	          <div class="slogan-date" id="sloganDate"></div>
+	        </div>
         <div class="account-list" id="accountList"></div>
         <div class="empty-state" id="emptyHome" style="display:none">
           <div class="icon">📒</div><div class="text">还没有账户</div><div class="sub">点击下方按钮创建第一个账本吧</div>
@@ -281,11 +288,15 @@
 	        <div class="sheet-title">数据备份</div>
 	        <div class="sheet-msg">导出 Excel 方便查看，或导出完整备份用于恢复</div>
 	        <button class="sheet-btn" onclick="exportExcel()">📊 导出 Excel</button>
+	        <button class="sheet-btn" onclick="document.getElementById('importExcelFile').click()">📥 导入 Excel</button>
 	        <button class="sheet-btn" onclick="exportJSON()">📤 导出完整备份</button>
 	        <button class="sheet-btn" onclick="triggerImport()">📥 从备份恢复</button>
 	        <button class="sheet-btn cancel" onclick="closeBackupSheet()">取消</button>
 	      </div>
 	    </div>
+
+	    <!-- Hidden file inputs -->
+	    <input type="file" id="importExcelFile" accept=".csv" style="display:none" onchange="importExcel(this)">
 
 	    <div class="toast" id="toast"></div>
 
@@ -880,6 +891,90 @@
 	      showToast('完整备份已导出');
 	    }
 
+	    /* ========== CSV Import ========== */
+	    function parseCSV(text) {
+	      const rows = [];
+	      let row = [];
+	      let field = '';
+	      let inQuotes = false;
+	      if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+	      for (let i = 0; i < text.length; i++) {
+	        const ch = text[i];
+	        const next = text[i + 1];
+	        if (inQuotes) {
+	          if (ch === '"') {
+	            if (next === '"') { field += '"'; i++; }
+	            else { inQuotes = false; }
+	          } else { field += ch; }
+	        } else {
+	          if (ch === '"') { inQuotes = true; }
+	          else if (ch === ',') { row.push(field); field = ''; }
+	          else if (ch === '\n') { row.push(field); field = ''; rows.push(row); row = []; }
+	          else if (ch === '\r') {
+	            if (next === '\n') i++;
+	            row.push(field); field = ''; rows.push(row); row = [];
+	          } else { field += ch; }
+	        }
+	      }
+	      if (field || row.length > 0) { row.push(field); rows.push(row); }
+	      return rows;
+	    }
+
+	    function importExcel(input) {
+	      const file = input.files[0];
+	      if (!file) return;
+	      const reader = new FileReader();
+	      reader.onload = function(e) {
+	        const rows = parseCSV(e.target.result);
+	        if (rows.length < 2) { showToast('文件为空或格式不正确'); input.value = ''; return; }
+	        const header = rows[0];
+	        const col = (name) => header.indexOf(name);
+	        const dateIdx = col('日期'), typeIdx = col('类型'), amountIdx = col('金额');
+	        const sourceIdx = col('来源/去向'), noteIdx = col('备注');
+	        const accountIdx = col('账户'), membersIdx = col('成员');
+	        if (dateIdx === -1 || typeIdx === -1 || amountIdx === -1 || accountIdx === -1) {
+	          showToast('文件格式不匹配，请使用蜻蜓账本导出的Excel');
+	          input.value = ''; return;
+	        }
+	        const accounts = getAccounts();
+	        const bills = getBills();
+	        let imported = 0, skipped = 0;
+	        for (let i = 1; i < rows.length; i++) {
+	          const r = rows[i];
+	          if (r.length <= accountIdx || !r[accountIdx].trim()) { skipped++; continue; }
+	          const accountName = r[accountIdx].trim();
+	          const date = (r[dateIdx] || '').trim();
+	          const typeStr = (r[typeIdx] || '').trim();
+	          const amount = parseFloat(r[amountIdx]);
+	          const source = sourceIdx >= 0 ? (r[sourceIdx] || '').trim() : '';
+	          const note = noteIdx >= 0 ? (r[noteIdx] || '').trim() : '';
+	          const membersStr = membersIdx >= 0 ? (r[membersIdx] || '').trim() : '';
+	          if (!date || !typeStr || isNaN(amount) || amount <= 0) { skipped++; continue; }
+	          const type = typeStr === '收入' ? 'income' : 'expense';
+	          let account = accounts.find(a => a.name === accountName);
+	          if (!account) {
+	            account = { id: uid(), name: accountName, members: [], createdAt: Date.now() };
+	            accounts.push(account);
+	          }
+	          if (membersStr) {
+	            const newM = membersStr.split('、').map(s => s.trim()).filter(Boolean);
+	            if (!account.members) account.members = [];
+	            newM.forEach(m => { if (!account.members.includes(m)) account.members.push(m); });
+	          }
+	          bills.push({
+	            id: uid(), accountId: account.id, type, amount: Math.round(amount * 100) / 100,
+	            date, source, note, image: null, createdAt: Date.now()
+	          });
+	          imported++;
+	        }
+	        saveAccounts(accounts); saveBills(bills);
+	        showToast('导入 ' + imported + ' 条，跳过 ' + skipped + ' 条');
+	        renderHome();
+	      };
+	      reader.readAsText(file);
+	      input.value = '';
+	    }
+
     function triggerImport() {
       closeBackupSheet();
       document.getElementById('importFile').click();
@@ -970,12 +1065,66 @@
       toastTimer = setTimeout(() => el.classList.remove('show'), 1500);
     }
 
-    /* ========== Init ========== */
-    function init() {
-      document.getElementById('dateDisplay').textContent = getToday();
-      document.getElementById('inputDate').value = getToday();
-      renderMemberFields();
-      renderHome();
+	    /* ========== Daily Slogan ========== */
+	    const SLOGANS = [
+	      '财富是思考的产物，不是时间的产物',
+	      '你不理财，财不理你',
+	      '每一笔小钱，都是未来的种子',
+	      '记账是财富自由的第一步',
+	      '富人买入资产，穷人只有支出',
+	      '金钱是自由的翅膀，规划好才能飞翔',
+	      '今天的节约，是明天的自由',
+	      '复利是世界第八大奇迹',
+	      '预算不是限制，而是解放',
+	      '财务自由，从看清每一笔账开始',
+	      '不要把鸡蛋放在一个篮子里',
+	      '收入像河流，支出像瀑布，管好方向',
+	      '财富积累是马拉松，不是短跑',
+	      '聪明人让钱为自己工作',
+	      '记账的人，运气不会太差',
+	      '掌握数字，就掌握了生活',
+	      '最好的投资是投资自己',
+	      '省一元就是赚一元',
+	      '金钱是好仆人，坏主人',
+	      '每天的坚持，都是通向自由的一步',
+	      '先储蓄，后消费',
+	      '真正的富有是内心的丰盈加口袋的充实',
+	      '做金钱的主人，不做金钱的奴隶',
+	      '财富不是目的，是手段',
+	      '会记账的人，更懂生活',
+	      '少一分冲动，多一分从容',
+	      '想要财富自由，先看清财富去向',
+	      '积累财富是一场修行',
+	      '好的习惯比好的运气更可靠',
+	      '今天记账了吗？每一笔都值得记录',
+	      '精打细算不是小气，是智慧',
+	      '你的未来，藏在今天的账本里',
+	      '与其羡慕别人赚钱，不如管好自己的钱',
+	      '量入为出，知足常乐',
+	      '财富如蜻蜓点水，需轻盈而精准'
+	    ];
+
+	    function getDailySlogan() {
+	      const now = new Date();
+	      const start = new Date(now.getFullYear(), 0, 0);
+	      const diff = now - start;
+	      const dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24));
+	      const idx = dayOfYear % SLOGANS.length;
+	      const months = ['1','2','3','4','5','6','7','8','9','10','11','12'];
+	      const days = String(now.getDate());
+	      const dateStr = now.getFullYear() + '年' + months[now.getMonth()] + '月' + days + '日';
+	      return { text: SLOGANS[idx], date: dateStr };
+	    }
+	    function init() {
+	      document.getElementById('dateDisplay').textContent = getToday();
+	      document.getElementById('inputDate').value = getToday();
+	      renderMemberFields();
+	      renderHome();
+
+	      // Daily slogan
+	      const slogan = getDailySlogan();
+	      document.getElementById('sloganText').textContent = '💡 ' + slogan.text;
+	      document.getElementById('sloganDate').textContent = slogan.date;
 
       document.addEventListener('touchstart', function(e) {
         if (e.target.tagName === 'BUTTON' && e.touches.length > 1) e.preventDefault();
