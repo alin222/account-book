@@ -940,45 +940,51 @@
 	          showToast('文件格式不匹配，请使用蜻蜓账本导出的Excel');
 	          input.value = ''; return;
 	        }
-	        const accounts = getAccounts();
-	        const bills = getBills();
-	        let imported = 0, skipped = 0;
-	        for (let i = 1; i < rows.length; i++) {
-	          const r = rows[i];
-	          if (r.length <= accountIdx || !r[accountIdx].trim()) { skipped++; continue; }
-	          const accountName = r[accountIdx].trim();
-	          const date = (r[dateIdx] || '').trim();
-	          const typeStr = (r[typeIdx] || '').replace(/[\u200B-\u200D\uFEFF]/g, '').trim();
-	          const amount = parseFloat(r[amountIdx]);
-	          const source = sourceIdx >= 0 ? (r[sourceIdx] || '').trim() : '';
-	          const note = noteIdx >= 0 ? (r[noteIdx] || '').trim() : '';
-	          const membersStr = membersIdx >= 0 ? (r[membersIdx] || '').trim() : '';
-	          if (!date || !typeStr || isNaN(amount) || amount <= 0) { skipped++; continue; }
-	          // Robust type detection: explicit match + fallback
-	          let type = 'expense';
-	          if (typeStr === '收入' || typeStr === '收') type = 'income';
-	          else if (typeStr === '支出' || typeStr === '支') type = 'expense';
-	          else if (typeStr.includes('收') && !typeStr.includes('支')) type = 'income';
-	          else if (typeStr.includes('支') && !typeStr.includes('收')) type = 'expense';
-	          let account = accounts.find(a => a.name === accountName);
-	          if (!account) {
-	            account = { id: uid(), name: accountName, members: [], createdAt: Date.now() };
-	            accounts.push(account);
-	          }
-	          if (membersStr) {
-	            const newM = membersStr.split('、').map(s => s.trim()).filter(Boolean);
-	            if (!account.members) account.members = [];
-	            newM.forEach(m => { if (!account.members.includes(m)) account.members.push(m); });
-	          }
-	          bills.push({
-	            id: uid(), accountId: account.id, type, amount: Math.round(amount * 100) / 100,
-	            date, source, note, image: null, createdAt: Date.now()
-	          });
-	          imported++;
-	        }
-	        saveAccounts(accounts); saveBills(bills);
-	        showToast('导入 ' + imported + ' 条，跳过 ' + skipped + ' 条');
-	        renderHome();
+		        const accounts = getAccounts();
+		        const bills = getBills();
+		        let imported = 0, skipped = 0, duped = 0;
+		        for (let i = 1; i < rows.length; i++) {
+		          const r = rows[i];
+		          if (r.length <= accountIdx || !r[accountIdx].trim()) { skipped++; continue; }
+		          const accountName = r[accountIdx].trim();
+		          const date = (r[dateIdx] || '').trim();
+		          const typeStr = (r[typeIdx] || '').replace(/[^\u4e00-\u9fff]/g, '');  // keep Chinese only
+		          const amount = parseFloat(r[amountIdx]);
+		          const source = sourceIdx >= 0 ? (r[sourceIdx] || '').trim() : '';
+		          const note = noteIdx >= 0 ? (r[noteIdx] || '').trim() : '';
+		          const membersStr = membersIdx >= 0 ? (r[membersIdx] || '').trim() : '';
+		          if (!date || !typeStr || isNaN(amount) || amount <= 0) { skipped++; continue; }
+		          // Type: first Chinese character determines type — '收'=income, anything else=expense
+		          const type = typeStr.charAt(0) === '收' ? 'income' : 'expense';
+		          // Find or create account
+		          let account = accounts.find(a => a.name === accountName);
+		          if (!account) {
+		            account = { id: uid(), name: accountName, members: [], createdAt: Date.now() };
+		            accounts.push(account);
+		          }
+		          if (membersStr) {
+		            const newM = membersStr.split('、').map(s => s.trim()).filter(Boolean);
+		            if (!account.members) account.members = [];
+		            newM.forEach(m => { if (!account.members.includes(m)) account.members.push(m); });
+		          }
+		          // Dedup: skip if same date+type+amount+source+account already exists
+		          const dup = bills.find(b =>
+		            b.accountId === account.id && b.date === date && b.type === type &&
+		            Math.abs((b.amount||0) - amount) < 0.001 && (b.source||'') === source
+		          );
+		          if (dup) { duped++; continue; }
+		          bills.push({
+		            id: uid(), accountId: account.id, type, amount: Math.round(amount * 100) / 100,
+		            date, source, note, image: null, createdAt: Date.now()
+		          });
+		          imported++;
+		        }
+		        saveAccounts(accounts); saveBills(bills);
+		        const parts = ['导入 ' + imported + ' 条'];
+		        if (duped > 0) parts.push('跳过重复 ' + duped + ' 条');
+		        if (skipped > 0) parts.push('跳过异常 ' + skipped + ' 条');
+		        showToast(parts.join('，'));
+		        renderHome();
 	      };
 	      reader.readAsText(file);
 	      input.value = '';
