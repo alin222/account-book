@@ -534,8 +534,19 @@
         showBottom('create');
         if (fabAdd) fabAdd.style.display = 'none';
         renderHome();
-      } else if (page === 'account') {
-        showNav('账户详情', true, true);
+	      } else if (page === 'account') {
+	        // Check password before showing detail
+	        const accounts = getAccounts();
+	        const acc = accounts.find(a => a.id === currentAccountId);
+	        if (acc && acc.hasPassword && !accountPasswords[currentAccountId]) {
+	          pendingPwdAccountId = currentAccountId;
+	          document.getElementById('pwdMsg').textContent = '「' + acc.name + '」已设置密码';
+	          document.getElementById('pwdInput').value = '';
+	          document.getElementById('pwdOverlay').classList.add('show');
+	          setTimeout(() => document.getElementById('pwdInput').focus(), 300);
+	          return;
+	        }
+	        showNav('账户详情', true, true);
         showBottom('bill');
         if (fabAdd) fabAdd.style.display = 'flex';
         renderAccountDetail();
@@ -896,10 +907,11 @@
         currentAccountId = eid;
         setTimeout(() => renderPage('account', 'forward'), 500);
       } else {
-        // Create new
-        const account = { id: uid(), name, members, createdAt: Date.now() };
-        accounts.push(account);
-        saveAccounts(accounts);
+	        // Create new
+	        const account = { id: uid(), name, members, createdAt: Date.now() };
+	        if (pwd) { account.password = pwd; accountPasswords[account.id] = pwd; }
+	        accounts.push(account);
+	        saveAccounts(accounts);
         showToast('创建成功');
         currentAccountId = account.id;
         navStack = ['home', 'account'];
