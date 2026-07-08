@@ -361,11 +361,11 @@
 	    }
 
 	    function getAccounts() { return _accounts; }
-	    function saveAccounts(arr) { _accounts = arr; API.saveAccountsBulk(arr).catch(e=>console.error(e)); }
+	    function saveAccounts(arr) { _accounts = arr; return API.saveAccountsBulk(arr).catch(e=>console.error(e)); }
 	    function getBillsAll() { return _bills; }
 	    function getBillsFor(accountId) { return _bills.filter(b => b.accountId === accountId); }
-	    function getBills() { return _bills; }  // compat
-	    function saveBills(arr) { _bills = arr; API.saveBillsBulk(arr).catch(e=>console.error(e)); }
+	    function getBills() { return _bills; }
+	    function saveBills(arr) { _bills = arr; return API.saveBillsBulk(arr).catch(e=>console.error(e)); }
 
 	    function uid() {
 	      return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
@@ -445,10 +445,6 @@
 
 	    function goBack() {
 	      if (navStack.length <= 1) return;
-	      // Clear password when leaving account page
-	      if (navStack[navStack.length - 1] === 'account' && currentAccountId) {
-	        delete accountPasswords[currentAccountId];
-	      }
 	      navStack.pop();
 	      const prev = navStack[navStack.length - 1];
 	      if (prev === 'home') currentAccountId = null;
@@ -882,7 +878,7 @@
       container.innerHTML = html;
     }
 
-    function createAccount() {
+	    async function createAccount() {
       if (accountSubmitting) return;
       accountSubmitting = true;
 
@@ -907,10 +903,10 @@
 	        if (idx !== -1) {
 	          accounts[idx].name = name;
 	          accounts[idx].members = members;
-	          if (pwd) accounts[idx].password = pwd;
-	        }
-        saveAccounts(accounts);
-        showToast('已更新');
+		          if (pwd) accounts[idx].password = pwd;
+		        }
+		        await saveAccounts(accounts);
+	        showToast('已更新');
         // Go back to account detail
         navStack = ['home', 'account'];
         const eid = editingAccountId;
@@ -919,11 +915,13 @@
         setTimeout(() => renderPage('account', 'forward'), 500);
       } else {
 	        // Create new
-	        const account = { id: uid(), name, members, createdAt: Date.now() };
+		        const account = { id: uid(), name, members, createdAt: Date.now() };
 		        if (pwd) { account.password = pwd; }
-	        accounts.push(account);
-	        saveAccounts(accounts);
-        showToast('创建成功');
+		        accounts.push(account);
+		        await saveAccounts(accounts);
+		        // Refresh cache to get hasPassword from server
+		        await refreshCache();
+	        showToast('创建成功');
         currentAccountId = account.id;
         navStack = ['home', 'account'];
         setTimeout(() => renderPage('account', 'forward'), 500);
