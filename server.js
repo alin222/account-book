@@ -1,6 +1,7 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const multer = require('multer');
 
 const app = express();
@@ -51,16 +52,27 @@ function uid() {
 }
 
 // ============ API: Accounts ============
+function hashPassword(pwd) {
+  return crypto.createHash('sha256').update(pwd).digest('hex');
+}
+
+function sanitizeAccount(a) {
+  const { password, ...rest } = a;
+  return { ...rest, hasPassword: !!password };
+}
+
 router.get('/api/accounts', (req, res) => {
-  res.json(readJSON('accounts.json'));
+  const accounts = readJSON('accounts.json');
+  res.json(accounts.map(sanitizeAccount));
 });
 
 router.post('/api/accounts', (req, res) => {
   const accounts = readJSON('accounts.json');
-  const account = { id: uid(), name: '', members: [], createdAt: Date.now(), ...req.body };
-  accounts.push(account);
+  const data = { id: uid(), name: '', members: [], createdAt: Date.now(), ...req.body };
+  if (data.password) data.password = hashPassword(data.password);
+  accounts.push(data);
   writeJSON('accounts.json', accounts);
-  res.json(account);
+  res.json(sanitizeAccount(data));
 });
 
 router.put('/api/accounts/:id', (req, res) => {
@@ -84,8 +96,32 @@ router.delete('/api/accounts/:id', (req, res) => {
   res.json({ success: true });
 });
 
+// Password verification
+router.post('/api/accounts/:id/verify', (req, res) => {
+  const accounts = readJSON('accounts.json');
+  const account = accounts.find(a => a.id === req.params.id);
+  if (!account) return res.status(404).json({ error: '账户不存在' });
+  if (!account.password) return res.json({ ok: true }); // no password set
+  const provided = hashPassword(req.body.password || '');
+  if (provided !== account.password) return res.status(403).json({ error: '密码错误' });
+  res.json({ ok: true });
+});
+
+// Check account password (middleware-style helper)
+function checkAccountAccess(accountId, password) {
+  const accounts = readJSON('accounts.json');
+  const account = accounts.find(a => a.id === accountId);
+  if (!account) return false;
+  if (!account.password) return true;
+  return hashPassword(password || '') === account.password;
+}
+
 // ============ API: Bills ============
 router.get('/api/bills', (req, res) => {
+  // Check access if account password protected
+  if (req.query.accountId && !checkAccountAccess(req.query.accountId, req.query.password)) {
+    return res.status(403).json({ error: '密码错误' });
+  }
   let bills = readJSON('bills.json');
   if (req.query.accountId) {
     bills = bills.filter(b => b.accountId === req.query.accountId);
@@ -125,7 +161,12 @@ router.post('/api/upload', upload.single('image'), (req, res) => {
 
 // ============ API: Bulk operations ============
 router.post('/api/accounts/bulk', (req, res) => {
-  const accounts = req.body.accounts || [];
+  const accounts = (req.body.accounts || []).map(a => {
+    if (a.password && !/^[a-f0-9]{64}$/.test(a.password)) {
+      a.password = hashPassword(a.password);
+    }
+    return a;
+  });
   writeJSON('accounts.json', accounts);
   res.json({ success: true, count: accounts.length });
 });

@@ -254,21 +254,24 @@
         </div>
       </div>
 
-      <!-- Create/Edit Account -->
-      <div class="page" id="page-create-account">
-        <div class="create-form">
-          <div class="form-group">
-            <div class="form-row"><span class="f-label">名称 <span class="required">*</span></span><input type="text" id="inputAccountName" placeholder="例如：家庭账本" maxlength="20"></div>
-          </div>
-          <div class="form-group">
-            <div id="memberList"></div>
-            <div class="btn-add-member" onclick="addMemberField()"><span>＋</span> 添加成员（选填）</div>
-          </div>
-        </div>
-        <div class="save-btn-wrap">
-          <button class="btn-full" id="btnCreateAccount" onclick="createAccount()">创建账户</button>
-        </div>
-      </div>
+	    <!-- Create/Edit Account -->
+	      <div class="page" id="page-create-account">
+	        <div class="create-form">
+	          <div class="form-group">
+	            <div class="form-row"><span class="f-label">名称 <span class="required">*</span></span><input type="text" id="inputAccountName" placeholder="例如：家庭账本" maxlength="20"></div>
+	          </div>
+	          <div class="form-group">
+	            <div class="form-row"><span class="f-label">密码</span><input type="password" id="inputAccountPwd" placeholder="留空则无密码" maxlength="20"></div>
+	          </div>
+	          <div class="form-group">
+	            <div id="memberList"></div>
+	            <div class="btn-add-member" onclick="addMemberField()"><span>＋</span> 添加成员（选填）</div>
+	          </div>
+	        </div>
+	        <div class="save-btn-wrap">
+	          <button class="btn-full" id="btnCreateAccount" onclick="createAccount()">创建账户</button>
+	        </div>
+	      </div>
     </div>
 
     <div class="bottom-action" id="bottomCreate"><button class="btn-full" onclick="goCreateAccount()">＋ 创建新账户</button></div>
@@ -283,7 +286,16 @@
       </div>
     </div>
 
-	    <!-- Backup Sheet -->
+	    <!-- Password Prompt -->
+	    <div class="overlay" id="pwdOverlay" onclick="closePwdPrompt()">
+	      <div class="sheet" onclick="event.stopPropagation()">
+	        <div class="sheet-title">需要密码</div>
+	        <div class="sheet-msg" id="pwdMsg"></div>
+	        <input type="password" id="pwdInput" placeholder="请输入账本密码" style="width:100%;padding:12px;font-size:16px;border:1px solid var(--separator);border-radius:10px;margin-bottom:12px;text-align:center;" maxlength="20" onkeydown="if(event.key==='Enter')verifyPwd()">
+	        <button class="sheet-btn" onclick="verifyPwd()">确认</button>
+	        <button class="sheet-btn cancel" onclick="closePwdPrompt()">取消</button>
+	      </div>
+	    </div>
 	    <div class="overlay" id="backupOverlay" onclick="closeBackupSheet(event)">
 	      <div class="sheet" onclick="event.stopPropagation()">
 	        <div class="sheet-title">数据备份</div>
@@ -320,7 +332,11 @@
 	      createAccount(data) { return this._fetch('/api/accounts', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) }); },
 	      updateAccount(id, data) { return this._fetch('/api/accounts/'+id, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) }); },
 	      deleteAccount(id) { return this._fetch('/api/accounts/'+id, { method:'DELETE' }); },
-	      getBills(accountId) { return this._fetch('/api/bills' + (accountId ? '?accountId='+accountId : '')); },
+	      getBills(accountId) {
+	        const pwd = accountPasswords[accountId] || '';
+	        const qs = accountId ? '?accountId=' + accountId + (pwd ? '&password=' + encodeURIComponent(pwd) : '') : '';
+	        return this._fetch('/api/bills' + qs);
+	      },
 	      getAllBills() { return this._fetch('/api/bills'); },
 	      createBill(data) { return this._fetch('/api/bills', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) }); },
 	      updateBill(id, data) { return this._fetch('/api/bills/'+id, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) }); },
@@ -413,6 +429,8 @@
 	    let billSubmitting = false;    // prevent double-save
 	    let accountSubmitting = false;
 	    let currentImageData = null;   // base64 image for current bill
+	    let pendingPwdAccountId = null; // account awaiting password
+	    let accountPasswords = {};     // session cache: accountId -> password
 
     function navigateTo(page, params) {
       navStack.push(page);
@@ -422,20 +440,59 @@
       renderPage(page, 'forward');
     }
 
-    function goBack() {
-      if (navStack.length <= 1) return;
-      navStack.pop();
-      const prev = navStack[navStack.length - 1];
-      if (prev === 'home') currentAccountId = null;
-      editingBillId = null;
-      editingAccountId = null;
-      billSubmitting = false;
-      accountSubmitting = false;
-      renderPage(prev, 'back');
-    }
+	    function goBack() {
+	      if (navStack.length <= 1) return;
+	      navStack.pop();
+	      const prev = navStack[navStack.length - 1];
+	      if (prev === 'home') currentAccountId = null;
+	      editingBillId = null;
+	      editingAccountId = null;
+	      billSubmitting = false;
+	      accountSubmitting = false;
+	      renderPage(prev, 'back');
+	    }
+
+	    /* ========== Password Prompt ========== */
+	    async function verifyPwd() {
+	      const pwd = document.getElementById('pwdInput').value;
+	      if (!pwd) return;
+	      try {
+	        const res = await fetch(BASE + '/api/accounts/' + pendingPwdAccountId + '/verify', {
+	          method: 'POST',
+	          headers: { 'Content-Type': 'application/json' },
+	          body: JSON.stringify({ password: pwd })
+	        });
+	        if (!res.ok) { showToast('密码错误'); return; }
+	        accountPasswords[pendingPwdAccountId] = pwd;
+	        document.getElementById('pwdOverlay').classList.remove('show');
+	        const id = pendingPwdAccountId;
+	        pendingPwdAccountId = null;
+	        goAccountDetail(id);
+	      } catch(e) { showToast('验证失败'); }
+	    }
+
+	    function closePwdPrompt() {
+	      document.getElementById('pwdOverlay').classList.remove('show');
+	      pendingPwdAccountId = null;
+	    }
 
     function goCreateAccount() { editingAccountId = null; navigateTo('create-account'); }
-    function goAccountDetail(id) { currentAccountId = id; navigateTo('account', { accountId: id }); }
+	    function goAccountDetail(id) {
+	      const accounts = getAccounts();
+	      const account = accounts.find(a => a.id === id);
+	      // If already verified this session, go straight in
+	      if (!account || !account.hasPassword || accountPasswords[id]) {
+	        currentAccountId = id;
+	        navigateTo('account', { accountId: id });
+	        return;
+	      }
+	      // Need password
+	      pendingPwdAccountId = id;
+	      document.getElementById('pwdMsg').textContent = '「' + account.name + '」已设置密码';
+	      document.getElementById('pwdInput').value = '';
+	      document.getElementById('pwdOverlay').classList.add('show');
+	      setTimeout(() => document.getElementById('pwdInput').focus(), 300);
+	    }
     function goAddBill() { editingBillId = null; navigateTo('add-bill'); }
     function goEditBill(billId) { editingBillId = billId; navigateTo('add-bill', { billId }); }
     function goEditAccountPage() {
@@ -504,8 +561,8 @@
       emptyEl.style.display='none';
       listEl.innerHTML = accounts.map(a => {
         const s = getStats(a.id);
-        return `<div class="account-card" onclick="goAccountDetail('${a.id}')" oncontextmenu="event.preventDefault();showDeleteAccountSheet('${a.id}','${escapeHtml(a.name)}')">
-          <div class="card-top"><span class="card-name">${escapeHtml(a.name)}</span><div class="card-tags"><span class="tag">👥 ${a.members?.length||0}人</span><span class="tag">📋 ${s.billCount}笔</span></div></div>
+	        return `<div class="account-card" onclick="goAccountDetail('${a.id}')" oncontextmenu="event.preventDefault();showDeleteAccountSheet('${a.id}','${escapeHtml(a.name)}')">
+	          <div class="card-top"><span class="card-name">${a.hasPassword ? '🔒 ' : ''}${escapeHtml(a.name)}</span><div class="card-tags"><span class="tag">👥 ${a.members?.length||0}人</span><span class="tag">📋 ${s.billCount}笔</span></div></div>
           <div class="card-stats">
             <div class="stat"><div class="stat-label">总收入</div><div class="stat-value income">¥${fmt(s.totalIncome)}</div></div>
             <div class="stat"><div class="stat-label">总支出</div><div class="stat-value expense">¥${fmt(s.totalExpense)}</div></div>
@@ -808,8 +865,9 @@
       if (accountSubmitting) return;
       accountSubmitting = true;
 
-      const name = document.getElementById('inputAccountName').value.trim();
-      if (!name) { showToast('请输入账户名称'); accountSubmitting = false; return; }
+	      const name = document.getElementById('inputAccountName').value.trim();
+	      const pwd = document.getElementById('inputAccountPwd').value.trim();
+	      if (!name) { showToast('请输入账户名称'); accountSubmitting = false; return; }
 
       const members = [];
       for (let i = 0; i < memberCount; i++) {
@@ -821,13 +879,14 @@
       document.getElementById('btnCreateAccount').disabled = true;
 
       const accounts = getAccounts();
-      if (editingAccountId) {
-        // Update existing
-        const idx = accounts.findIndex(a => a.id === editingAccountId);
-        if (idx !== -1) {
-          accounts[idx].name = name;
-          accounts[idx].members = members;
-        }
+	      if (editingAccountId) {
+	        // Update existing
+	        const idx = accounts.findIndex(a => a.id === editingAccountId);
+	        if (idx !== -1) {
+	          accounts[idx].name = name;
+	          accounts[idx].members = members;
+	          if (pwd) accounts[idx].password = pwd;
+	        }
         saveAccounts(accounts);
         showToast('已更新');
         // Go back to account detail
