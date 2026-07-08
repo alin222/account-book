@@ -200,7 +200,9 @@
 	        </div>
         <div class="account-list" id="accountList"></div>
         <div class="empty-state" id="emptyHome" style="display:none">
-          <div class="icon">📒</div><div class="text">还没有账户</div><div class="sub">点击下方按钮创建第一个账本吧</div>
+	          <div class="icon">
+	            <svg width="64" height="64" viewBox="0 0 64 64"><ellipse cx="22" cy="26" rx="14" ry="5" fill="#007AFF" opacity="0.2" transform="rotate(-25 22 26)"/><ellipse cx="42" cy="26" rx="14" ry="5" fill="#007AFF" opacity="0.2" transform="rotate(25 42 26)"/><ellipse cx="24" cy="34" rx="10" ry="4" fill="#007AFF" opacity="0.15" transform="rotate(-15 24 34)"/><ellipse cx="40" cy="34" rx="10" ry="4" fill="#007AFF" opacity="0.15" transform="rotate(15 40 34)"/><rect x="28" y="16" width="8" height="30" rx="4" fill="#007AFF" opacity="0.4"/><circle cx="32" cy="13" r="6" fill="#007AFF" opacity="0.4"/><circle cx="29" cy="11" r="2.5" fill="#007AFF"/><circle cx="35" cy="11" r="2.5" fill="#007AFF"/></svg>
+	          </div><div class="text">还没有账户</div><div class="sub">点击下方按钮创建第一个账本吧</div>
         </div>
         <!-- Hidden file input for import -->
         <input type="file" id="importFile" accept=".json" style="display:none" onchange="handleImport(event)">
@@ -217,7 +219,9 @@
         </div>
         <div class="bill-list" id="billList"></div>
         <div class="empty-state" id="emptyBills" style="display:none">
-          <div class="icon">📝</div><div class="text">暂无账单记录</div><div class="sub">点击右下角按钮添加账单</div>
+	          <div class="icon">
+	            <svg width="64" height="64" viewBox="0 0 64 64"><ellipse cx="22" cy="26" rx="14" ry="5" fill="#007AFF" opacity="0.2" transform="rotate(-25 22 26)"/><ellipse cx="42" cy="26" rx="14" ry="5" fill="#007AFF" opacity="0.2" transform="rotate(25 42 26)"/><ellipse cx="24" cy="34" rx="10" ry="4" fill="#007AFF" opacity="0.15" transform="rotate(-15 24 34)"/><ellipse cx="40" cy="34" rx="10" ry="4" fill="#007AFF" opacity="0.15" transform="rotate(15 40 34)"/><rect x="28" y="16" width="8" height="30" rx="4" fill="#007AFF" opacity="0.4"/><circle cx="32" cy="13" r="6" fill="#007AFF" opacity="0.4"/><circle cx="29" cy="11" r="2.5" fill="#007AFF"/><circle cx="35" cy="11" r="2.5" fill="#007AFF"/></svg>
+	          </div><div class="text">暂无账单记录</div><div class="sub">点击右下角按钮添加账单</div>
         </div>
         <button class="fab" id="fabAdd" onclick="goAddBill()">＋</button>
       </div>
