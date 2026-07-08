@@ -10,7 +10,7 @@
 	  <title>蜻蜓账本</title>
 	  <link rel="manifest" href="manifest.json">
 	  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
-	  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'><defs><style>.w{fill:white;opacity:0.35}</style></defs><rect width='120' height='120' rx='26' fill='%23007AFF'/><ellipse class='w' cx='36' cy='50' rx='28' ry='10' transform='rotate(-25 36 50)'/><ellipse class='w' cx='84' cy='50' rx='28' ry='10' transform='rotate(25 84 50)'/><ellipse class='w' cx='38' cy='65' rx='22' ry='8' transform='rotate(-15 38 65)'/><ellipse class='w' cx='82' cy='65' rx='22' ry='8' transform='rotate(15 82 65)'/><rect x='54' y='28' width='12' height='60' rx='6' fill='white'/><circle cx='60' cy='25' r='11' fill='white'/><circle cx='55' cy='22' r='4' fill='%23007AFF'/><circle cx='65' cy='22' r='4' fill='%23007AFF'/></svg>">
+	  <link rel="apple-touch-icon" href="logo.png">
   <style>
     :root {
       --blue: #007AFF;
@@ -201,9 +201,7 @@
 	        </div>
         <div class="account-list" id="accountList"></div>
         <div class="empty-state" id="emptyHome" style="display:none">
-	          <div class="icon">
-	            <svg width="64" height="64" viewBox="0 0 64 64"><ellipse cx="22" cy="26" rx="14" ry="5" fill="#007AFF" opacity="0.2" transform="rotate(-25 22 26)"/><ellipse cx="42" cy="26" rx="14" ry="5" fill="#007AFF" opacity="0.2" transform="rotate(25 42 26)"/><ellipse cx="24" cy="34" rx="10" ry="4" fill="#007AFF" opacity="0.15" transform="rotate(-15 24 34)"/><ellipse cx="40" cy="34" rx="10" ry="4" fill="#007AFF" opacity="0.15" transform="rotate(15 40 34)"/><rect x="28" y="16" width="8" height="30" rx="4" fill="#007AFF" opacity="0.4"/><circle cx="32" cy="13" r="6" fill="#007AFF" opacity="0.4"/><circle cx="29" cy="11" r="2.5" fill="#007AFF"/><circle cx="35" cy="11" r="2.5" fill="#007AFF"/></svg>
-	          </div><div class="text">还没有账户</div><div class="sub">点击下方按钮创建第一个账本吧</div>
+	          <div class="icon"><img src="logo.png" style="width:64px;height:64px;border-radius:14px;"></div><div class="text">还没有账户</div><div class="sub">点击下方按钮创建第一个账本吧</div>
         </div>
         <!-- Hidden file input for import -->
         <input type="file" id="importFile" accept=".json" style="display:none" onchange="handleImport(event)">
@@ -220,9 +218,7 @@
         </div>
         <div class="bill-list" id="billList"></div>
         <div class="empty-state" id="emptyBills" style="display:none">
-	          <div class="icon">
-	            <svg width="64" height="64" viewBox="0 0 64 64"><ellipse cx="22" cy="26" rx="14" ry="5" fill="#007AFF" opacity="0.2" transform="rotate(-25 22 26)"/><ellipse cx="42" cy="26" rx="14" ry="5" fill="#007AFF" opacity="0.2" transform="rotate(25 42 26)"/><ellipse cx="24" cy="34" rx="10" ry="4" fill="#007AFF" opacity="0.15" transform="rotate(-15 24 34)"/><ellipse cx="40" cy="34" rx="10" ry="4" fill="#007AFF" opacity="0.15" transform="rotate(15 40 34)"/><rect x="28" y="16" width="8" height="30" rx="4" fill="#007AFF" opacity="0.4"/><circle cx="32" cy="13" r="6" fill="#007AFF" opacity="0.4"/><circle cx="29" cy="11" r="2.5" fill="#007AFF"/><circle cx="35" cy="11" r="2.5" fill="#007AFF"/></svg>
-	          </div><div class="text">暂无账单记录</div><div class="sub">点击右下角按钮添加账单</div>
+	          <div class="icon"><img src="logo.png" style="width:64px;height:64px;border-radius:14px;"></div><div class="text">暂无账单记录</div><div class="sub">点击右下角按钮添加账单</div>
         </div>
         <button class="fab" id="fabAdd" onclick="goAddBill()">＋</button>
       </div>
