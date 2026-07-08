@@ -897,11 +897,19 @@
 
 	    /* ========== CSV Import ========== */
 	    function parseCSV(text) {
+	      // Remove BOM
+	      if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+
+	      // Auto-detect separator: count commas vs tabs in first line
+	      const firstLine = text.split(/\r?\n/)[0] || '';
+	      const commas = (firstLine.match(/,/g) || []).length;
+	      const tabs = (firstLine.match(/\t/g) || []).length;
+	      const sep = tabs > commas ? '\t' : ',';
+
 	      const rows = [];
 	      let row = [];
 	      let field = '';
 	      let inQuotes = false;
-	      if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
 	      for (let i = 0; i < text.length; i++) {
 	        const ch = text[i];
 	        const next = text[i + 1];
@@ -912,7 +920,7 @@
 	          } else { field += ch; }
 	        } else {
 	          if (ch === '"') { inQuotes = true; }
-	          else if (ch === ',') { row.push(field); field = ''; }
+	          else if (ch === sep) { row.push(field); field = ''; }
 	          else if (ch === '\n') { row.push(field); field = ''; rows.push(row); row = []; }
 	          else if (ch === '\r') {
 	            if (next === '\n') i++;
