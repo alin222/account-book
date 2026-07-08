@@ -237,9 +237,9 @@
           <div class="am-row"><span class="am-symbol">¥</span><input type="text" inputmode="decimal" id="inputAmount" placeholder="0.00" oninput="onAmountInput(this)"></div>
         </div>
         <div class="form-group">
-	          <div class="form-row" style="position:relative;">
-	            <span class="f-label">日期 <span class="required">*</span></span><span class="f-value" id="dateDisplay"></span><span class="f-arrow">›</span>
-	            <input type="date" id="inputDate" onchange="onDateChange(this)" style="position:absolute;inset:0;opacity:0;width:100%;height:100%;">
+	          <div class="form-row">
+	            <span class="f-label">日期 <span class="required">*</span></span>
+	            <input type="date" id="inputDate" onchange="onDateChange(this)" style="flex:1;text-align:right;border:none;outline:none;font-size:15px;color:var(--text);background:none;padding:0;-webkit-appearance:none;font-family:inherit;">
 	          </div>
           <div class="form-row"><span class="f-label" id="sourceLabel">资金来源 <span class="required">*</span></span><input type="text" id="inputSource" placeholder="例如：工资、奖金" maxlength="50"></div>
 	          <div class="form-row"><span class="f-label">备注</span><input type="text" id="inputNote" placeholder="添加备注（选填）" maxlength="100"></div>
@@ -554,8 +554,7 @@
           document.getElementById('inputAmount').value = String(bill.amount);
           document.getElementById('inputSource').value = bill.source || '';
           document.getElementById('inputNote').value = bill.note || '';
-          document.getElementById('dateDisplay').textContent = bill.date;
-          document.getElementById('inputDate').value = bill.date;
+	          document.getElementById('inputDate').value = bill.date;
 	          document.getElementById('btnSaveBill').textContent = '更新账单';
 	          document.getElementById('btnSaveBill').className = 'btn-save ' + billType;
 	          // Restore image if exists
@@ -582,9 +581,8 @@
         document.getElementById('inputSource').value = '';
         document.getElementById('inputNote').value = '';
         document.getElementById('inputSource').placeholder = '例如：工资、奖金';
-        document.getElementById('dateDisplay').textContent = getToday();
-        document.getElementById('inputDate').value = getToday();
-        document.getElementById('btnSaveBill').textContent = '保存账单';
+	        document.getElementById('inputDate').value = getToday();
+	        document.getElementById('btnSaveBill').textContent = '保存账单';
         document.getElementById('btnSaveBill').className = 'btn-save income';
       }
     }
@@ -598,7 +596,7 @@
     }
 
 	    function onDateChange(el) {
-	      document.getElementById('dateDisplay').textContent = el.value;
+	      // Native input handles display
 	    }
 
 	    /* ========== Image Handling ========== */
@@ -666,7 +664,7 @@
       billSubmitting = true;
 
       const amount = parseFloat(document.getElementById('inputAmount').value);
-      const date = document.getElementById('dateDisplay').textContent;
+	      const date = document.getElementById('inputDate').value;
       const source = document.getElementById('inputSource').value.trim();
       const note = document.getElementById('inputNote').value.trim();
 
@@ -1139,7 +1137,6 @@
 	      return { text: SLOGANS[idx], date: dateStr };
 	    }
 	    function init() {
-	      document.getElementById('dateDisplay').textContent = getToday();
 	      document.getElementById('inputDate').value = getToday();
 	      renderMemberFields();
 	      renderHome();
