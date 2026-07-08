@@ -833,12 +833,13 @@
       const btn = document.getElementById('btnCreateAccount');
       btn.disabled = false;
 
-      if (editingAccountId) {
-        // Edit mode
-        const account = getAccounts().find(a => a.id === editingAccountId);
-        if (account) {
-          document.getElementById('inputAccountName').value = account.name || '';
-          memberCount = Math.max(1, (account.members || []).length);
+	      if (editingAccountId) {
+	        // Edit mode
+	        const account = getAccounts().find(a => a.id === editingAccountId);
+	        if (account) {
+	          document.getElementById('inputAccountName').value = account.name || '';
+	          document.getElementById('inputAccountPwd').value = '';
+	          memberCount = Math.max(1, (account.members || []).length);
           renderMemberFields();
           // Fill member inputs
           (account.members || []).forEach((m, i) => {
@@ -852,9 +853,10 @@
           return;
         }
       } else {
-        // New mode
-        document.getElementById('inputAccountName').value = '';
-        memberCount = 1;
+	        // New mode
+	        document.getElementById('inputAccountName').value = '';
+	        document.getElementById('inputAccountPwd').value = '';
+	        memberCount = 1;
         renderMemberFields();
         document.getElementById('btnCreateAccount').textContent = '创建账户';
       }
