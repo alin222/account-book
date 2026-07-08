@@ -1,5 +1,5 @@
 // Service Worker for offline caching
-const CACHE_NAME = 'account-book-v3';
+const CACHE_NAME = 'account-book-v4';
 const ASSETS = [
   './index.html',
   './manifest.json',
