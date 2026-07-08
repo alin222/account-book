@@ -573,15 +573,16 @@
       const emptyEl = document.getElementById('emptyHome');
       if (accounts.length === 0) { listEl.innerHTML=''; emptyEl.style.display='block'; return; }
       emptyEl.style.display='none';
-      listEl.innerHTML = accounts.map(a => {
-        const s = getStats(a.id);
-	        return `<div class="account-card" onclick="goAccountDetail('${a.id}')" oncontextmenu="event.preventDefault();showDeleteAccountSheet('${a.id}','${escapeHtml(a.name)}')">
-	          <div class="card-top"><span class="card-name">${a.hasPassword ? '🔒 ' : ''}${escapeHtml(a.name)}</span><div class="card-tags"><span class="tag">👥 ${a.members?.length||0}人</span><span class="tag">📋 ${s.billCount}笔</span></div></div>
-          <div class="card-stats">
-            <div class="stat"><div class="stat-label">总收入</div><div class="stat-value income">¥${fmt(s.totalIncome)}</div></div>
-            <div class="stat"><div class="stat-label">总支出</div><div class="stat-value expense">¥${fmt(s.totalExpense)}</div></div>
-            <div class="stat"><div class="stat-label">余额</div><div class="stat-value ${s.balance>=0?'balance':'expense'}">¥${fmt(s.balance)}</div></div>
-          </div></div>`;
+	      listEl.innerHTML = accounts.map(a => {
+	        const s = getStats(a.id);
+	        const locked = a.hasPassword && !accountPasswords[a.id];
+		        return `<div class="account-card" onclick="goAccountDetail('${a.id}')" oncontextmenu="event.preventDefault();showDeleteAccountSheet('${a.id}','${escapeHtml(a.name)}')">
+		          <div class="card-top"><span class="card-name">${a.hasPassword ? '🔒 ' : ''}${escapeHtml(a.name)}</span><div class="card-tags"><span class="tag">👥 ${a.members?.length||0}人</span><span class="tag">📋 ${s.billCount}笔</span></div></div>
+	          <div class="card-stats">
+	            <div class="stat"><div class="stat-label">总收入</div><div class="stat-value income">${locked ? '***' : '¥'+fmt(s.totalIncome)}</div></div>
+	            <div class="stat"><div class="stat-label">总支出</div><div class="stat-value expense">${locked ? '***' : '¥'+fmt(s.totalExpense)}</div></div>
+	            <div class="stat"><div class="stat-label">余额</div><div class="stat-value ${s.balance>=0?'balance':'expense'}">${locked ? '***' : '¥'+fmt(s.balance)}</div></div>
+	          </div></div>`;
       }).join('');
     }
     function showDeleteAccountSheet(id, name) {
@@ -912,7 +913,7 @@
       } else {
 	        // Create new
 	        const account = { id: uid(), name, members, createdAt: Date.now() };
-	        if (pwd) { account.password = pwd; accountPasswords[account.id] = pwd; }
+		        if (pwd) { account.password = pwd; }
 	        accounts.push(account);
 	        saveAccounts(accounts);
         showToast('创建成功');
