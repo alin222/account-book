@@ -356,7 +356,28 @@
       const dt = new Date(d);
       return dt.getFullYear() + '-' + String(dt.getMonth()+1).padStart(2,'0') + '-' + String(dt.getDate()).padStart(2,'0');
     }
-    function getToday() { return fmtDate(new Date()); }
+	    function getToday() { return fmtDate(new Date()); }
+	    function normalizeDate(str) {
+	      str = String(str || '').trim();
+	      if (!str) return '';
+	      // Already in YYYY-MM-DD format
+	      if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+	      // Handle YYYY/M/D or YYYY-M-D
+	      const parts = str.split(/[-/]/);
+	      if (parts.length === 3) {
+	        let y = parseInt(parts[0]), m = parseInt(parts[1]), d = parseInt(parts[2]);
+	        if (y < 100) y += 2000;
+	        if (y > 2000 && m >= 1 && m <= 12 && d >= 1 && d <= 31) {
+	          return y + '-' + String(m).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+	        }
+	      }
+	      // Fallback: try native Date
+	      const dt = new Date(str);
+	      if (!isNaN(dt.getTime())) {
+	        return dt.getFullYear() + '-' + String(dt.getMonth()+1).padStart(2,'0') + '-' + String(dt.getDate()).padStart(2,'0');
+	      }
+	      return str;
+	    }
     function escapeHtml(str) { const d=document.createElement('div'); d.textContent=str; return d.innerHTML; }
 
     /* ========== Navigation ========== */
@@ -845,7 +866,7 @@
 	        const account = accountMap[b.accountId];
 	        const typeLabel = b.type === 'income' ? '收入' : '支出';
 	        rows.push([
-	          b.date,
+	          normalizeDate(b.date),
 	          typeLabel,
 	          b.amount,
 	          b.source || '',
@@ -963,7 +984,7 @@
 	          const r = rows[i];
 	          if (!r || r.length <= acIdx || !String(r[acIdx] || '').trim()) { skipped++; continue; }
 	          const accountName = String(r[acIdx] || '').trim();
-	          const date = String(r[dIdx] || '').trim();
+	          const date = normalizeDate(String(r[dIdx] || ''));
 	          const typeStr = String(r[tIdx] || '').replace(/[^\u4e00-\u9fff]/g, '');
 	          const amount = parseFloat(r[aIdx]);
 	          const source = sIdx >= 0 ? String(r[sIdx] || '').trim() : '';
