@@ -898,32 +898,36 @@
 	      // Remove BOM
 	      if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
 
-	      // Auto-detect separator: count commas vs tabs in first line
-	      const firstLine = text.split(/\r?\n/)[0] || '';
-	      const commas = (firstLine.match(/,/g) || []).length;
-	      const tabs = (firstLine.match(/\t/g) || []).length;
+	      // Auto-detect separator: count commas vs tabs in first 5 lines
+	      const sample = text.split(/\r?\n/).slice(0, 5).join('\n');
+	      const commas = (sample.match(/,/g) || []).length;
+	      const tabs = (sample.match(/\t/g) || []).length;
 	      const sep = tabs > commas ? '\t' : ',';
 
 	      const rows = [];
 	      let row = [];
 	      let field = '';
 	      let inQuotes = false;
+	      let skipLF = false;
 	      for (let i = 0; i < text.length; i++) {
 	        const ch = text[i];
-	        const next = text[i + 1];
+	        if (skipLF) { skipLF = false; if (ch === '\n') continue; }
 	        if (inQuotes) {
 	          if (ch === '"') {
-	            if (next === '"') { field += '"'; i++; }
+	            if (text[i + 1] === '"') { field += '"'; i++; }
 	            else { inQuotes = false; }
 	          } else { field += ch; }
 	        } else {
 	          if (ch === '"') { inQuotes = true; }
 	          else if (ch === sep) { row.push(field); field = ''; }
-	          else if (ch === '\n') { row.push(field); field = ''; rows.push(row); row = []; }
 	          else if (ch === '\r') {
-	            if (next === '\n') i++;
 	            row.push(field); field = ''; rows.push(row); row = [];
-	          } else { field += ch; }
+	            skipLF = true;
+	          }
+	          else if (ch === '\n') {
+	            row.push(field); field = ''; rows.push(row); row = [];
+	          }
+	          else { field += ch; }
 	        }
 	      }
 	      if (field || row.length > 0) { row.push(field); rows.push(row); }
